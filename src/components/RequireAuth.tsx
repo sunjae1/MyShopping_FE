@@ -19,11 +19,13 @@ export function RequireAuth() {
 
     setVerifying(true);
 
-    void refreshSession({ silent: true }).finally(() => {
-      if (!cancelled) {
-        setVerifying(false);
-      }
-    });
+    void refreshSession({ silent: true })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) {
+          setVerifying(false);
+        }
+      });
 
     return () => {
       cancelled = true;

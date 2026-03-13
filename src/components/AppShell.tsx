@@ -14,7 +14,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const { cart } = useCart();
-  const { user, loading, logout, clearSession } = useSession();
+  const { user, loading, logout, clearSession, sessionError } = useSession();
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const cartCount = cart.cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const currentPath = `${location.pathname}${location.search}${location.hash}`;
@@ -101,6 +101,7 @@ export function AppShell() {
       </header>
 
       <main className="page-frame">
+        <StatusBanner tone="error">{sessionError}</StatusBanner>
         <StatusBanner tone="error">{logoutError}</StatusBanner>
         <Outlet />
       </main>

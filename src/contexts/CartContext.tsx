@@ -67,7 +67,7 @@ export function CartProvider({ children }: PropsWithChildren) {
   }
 
   useEffect(() => {
-    void refreshCart();
+    void refreshCart().catch(() => undefined);
   }, [user?.id]);
 
   return (
