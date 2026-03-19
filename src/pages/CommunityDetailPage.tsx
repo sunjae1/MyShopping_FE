@@ -11,6 +11,7 @@ import {
   updatePost
 } from "../api/client";
 import type { Comment, Post } from "../api/types";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
 import { formatDateTime } from "../lib/format";
@@ -29,6 +30,8 @@ export function CommunityDetailPage() {
   });
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [pendingDeleteComment, setPendingDeleteComment] = useState<Comment | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
 
   useEffect(() => {
     const postId = Number(params.postId);
@@ -130,6 +133,8 @@ export function CommunityDetailPage() {
   }
 
   async function handleDeleteComment(commentId: number) {
+    setDeletingCommentId(commentId);
+
     try {
       await deleteComment(postId, commentId);
       setPost((current) =>
@@ -147,6 +152,8 @@ export function CommunityDetailPage() {
       }
 
       setFeedback(toAppErrorMessage(error, "댓글 삭제에 실패했습니다."));
+    } finally {
+      setDeletingCommentId(null);
     }
   }
 
@@ -205,6 +212,37 @@ export function CommunityDetailPage() {
 
   return (
     <div className="page-stack">
+      <ConfirmModal
+        open={pendingDeleteComment !== null}
+        title="댓글을 삭제할까요?"
+        description={
+          pendingDeleteComment
+            ? `"${pendingDeleteComment.content}" 댓글을 삭제하면 되돌릴 수 없습니다.`
+            : ""
+        }
+        confirmLabel="댓글 삭제"
+        tone="danger"
+        busy={
+          pendingDeleteComment !== null &&
+          deletingCommentId === pendingDeleteComment.id
+        }
+        onCancel={() => {
+          if (deletingCommentId !== null) {
+            return;
+          }
+          setPendingDeleteComment(null);
+        }}
+        onConfirm={() => {
+          if (!pendingDeleteComment) {
+            return;
+          }
+
+          void handleDeleteComment(pendingDeleteComment.id).finally(() => {
+            setPendingDeleteComment(null);
+          });
+        }}
+      />
+
       <div className="section-header">
         <div>
           <p className="eyebrow">POST DETAIL</p>
@@ -351,9 +389,10 @@ export function CommunityDetailPage() {
                         <button
                           type="button"
                           className="ghost-button"
-                          onClick={() => void handleDeleteComment(comment.id)}
+                          disabled={deletingCommentId === comment.id}
+                          onClick={() => setPendingDeleteComment(comment)}
                         >
-                          삭제
+                          {deletingCommentId === comment.id ? "삭제 중..." : "삭제"}
                         </button>
                       </div>
                     ) : null}

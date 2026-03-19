@@ -136,5 +136,6 @@ describe("AppShell offline startup", () => {
 
     expect(await screen.findByText("관리자 님")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "상품 관리" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "카테고리 관리" })).toBeInTheDocument();
   });
 });

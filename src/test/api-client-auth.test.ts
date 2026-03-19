@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   checkout,
   fetchCart,
+  fetchItems,
   fetchMyPage,
   fetchSession,
   login,
@@ -315,5 +316,17 @@ describe("api client auth flow", () => {
       },
       items: []
     });
+  });
+
+  it("rejects an empty myPage body with a controlled error", async () => {
+    fetchMock.mockResolvedValueOnce(emptyResponse(200));
+
+    await expect(fetchMyPage()).rejects.toThrow("마이페이지 응답 형식이 올바르지 않습니다.");
+  });
+
+  it("rejects an empty items body with a controlled error", async () => {
+    fetchMock.mockResolvedValueOnce(emptyResponse(200));
+
+    await expect(fetchItems()).rejects.toThrow("상품 목록 응답 형식이 올바르지 않습니다.");
   });
 });

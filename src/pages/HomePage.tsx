@@ -87,6 +87,7 @@ export function HomePage() {
 
     async function loadFilteredItems() {
       setCatalogLoading(true);
+      setError(null);
 
       try {
         const nextItems = await fetchItems({
@@ -225,8 +226,8 @@ export function HomePage() {
           <h1>프로모션, 랭킹, 카탈로그가 한 화면에서 바로 보이는 쇼핑몰 메인</h1>
           <p className="hero-description">
             상품과 카테고리는 실제 `/api/items`, `/api/categories` 데이터로만 구성합니다.
-            지금의 카테고리 블록은 장식용 카드가 아니라, 카테고리별 상품 필터로 바로
-            이어지는 탐색 바로가기입니다.
+            카테고리 섹션은 `CategoryDTO` 대표이미지를 받아서 구성하고, 카드를 누르면
+            해당 카테고리 상품만 바로 필터링합니다.
           </p>
           <div className="hero-actions">
             <a href="#catalog" className="primary-button link-button">
@@ -301,33 +302,70 @@ export function HomePage() {
 
       <StatusBanner tone="error">{error}</StatusBanner>
 
-      <section className="shortcut-strip">
-        {shortcutCollections.map((category, index) => {
-          const isActive = selectedCategoryId === category.id;
-
-          return (
-            <button
-              key={category.id}
-              type="button"
-              className={`shortcut-card ${isActive ? "shortcut-card-active" : ""}`.trim()}
-              onClick={() => handleShortcutClick(category.id)}
-            >
-              <span className="shortcut-index">{String(index + 1).padStart(2, "0")}</span>
-              <strong>{category.name}</strong>
-              <p>
-                {typeof category.itemCount === "number"
-                  ? `${formatNumber(category.itemCount)}개 상품이 연결된 카테고리`
-                  : "카테고리별 상품만 빠르게 모아보는 바로가기"}
-              </p>
-            </button>
-          );
-        })}
-        {shortcutCollections.length === 0 ? (
-          <div className="surface-card">
-            카테고리 데이터가 아직 없습니다. `/api/categories` 연결 후 바로가기 카드가
-            채워집니다.
+      <section className="section-block">
+        <div className="section-header section-header-wide">
+          <div>
+            <p className="eyebrow">CATEGORIES</p>
+            <h2>카테고리</h2>
+            <p className="section-description">
+              카테고리 대표이미지를 누르면 백엔드 `categoryId` 조건으로 전체 상품을 다시
+              조회합니다.
+            </p>
           </div>
-        ) : null}
+          <div className="catalog-toolbar">
+            <div className="catalog-summary">탐색 가능한 카테고리 {formatNumber(categories.length)}개</div>
+            <p className="field-hint">
+              {selectedCategory
+                ? `현재 선택된 카테고리: ${selectedCategory.name}`
+                : "카드를 누르면 해당 카테고리 상품만 바로 모아봅니다."}
+            </p>
+          </div>
+        </div>
+
+        <div className="shortcut-strip">
+          {shortcutCollections.map((category, index) => {
+            const isActive = selectedCategoryId === category.id;
+
+            return (
+              <button
+                key={category.id}
+                type="button"
+                className={`shortcut-card shortcut-card-media ${isActive ? "shortcut-card-active" : ""}`.trim()}
+                onClick={() => handleShortcutClick(category.id)}
+              >
+                <div className="shortcut-card-visual">
+                  {category.representativeImageUrl ? (
+                    <img
+                      src={resolveImageUrl(category.representativeImageUrl)}
+                      alt={`${category.name} 대표 이미지`}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="shortcut-card-empty-copy">
+                      아직 해당 카테고리에 상품이 없습니다.
+                    </div>
+                  )}
+                </div>
+                <div className="shortcut-card-body">
+                  <span className="shortcut-index">{String(index + 1).padStart(2, "0")}</span>
+                  <strong>{category.name}</strong>
+                  <p>
+                    {typeof category.itemCount === "number"
+                      ? `${formatNumber(category.itemCount)}개 상품이 연결된 카테고리`
+                      : "카테고리별 상품만 빠르게 모아보는 바로가기"}
+                  </p>
+                  <span className="shortcut-cta">{isActive ? "필터 해제" : "카테고리 보기"}</span>
+                </div>
+              </button>
+            );
+          })}
+          {shortcutCollections.length === 0 ? (
+            <div className="surface-card">
+              카테고리 데이터가 아직 없습니다. `/api/categories` 연결 후 바로가기 카드가
+              채워집니다.
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <section className="merchandising-grid">
@@ -402,17 +440,35 @@ export function HomePage() {
       </section>
 
       <section id="catalog" className="section-block">
-        <div className="section-header section-header-wide">
+        <div className="section-header">
           <div>
             <p className="eyebrow">CATALOG</p>
             <h2>전체 상품</h2>
-            <p className="section-description">
-              상품명 검색과 카테고리 필터 모두 실제 `/api/items` 조회 조건으로 연결됩니다.
-            </p>
           </div>
-          <div className="catalog-toolbar">
-            <div className="catalog-summary">현재 {formatNumber(visibleItems.length)}개 상품 노출</div>
-            <div className="catalog-filter-row">
+          <div className="catalog-summary">현재 {formatNumber(visibleItems.length)}개 상품 노출</div>
+        </div>
+
+        <div className="catalog-filter-panel">
+          <div className="catalog-filter-row">
+            <label className="search-shell">
+              <span>카테고리</span>
+              <select
+                value={selectedCategoryId === null ? "all" : String(selectedCategoryId)}
+                onChange={(event) =>
+                  handleCategoryChange(
+                    event.target.value === "all" ? null : Number(event.target.value)
+                  )
+                }
+              >
+                <option value="all">전체 카테고리</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="catalog-filter-search-group">
               <label className="search-shell">
                 <span>검색</span>
                 <input
@@ -422,24 +478,6 @@ export function HomePage() {
                   value={query}
                   onChange={(event) => handleQueryChange(event.target.value)}
                 />
-              </label>
-              <label className="search-shell">
-                <span>카테고리</span>
-                <select
-                  value={selectedCategoryId === null ? "all" : String(selectedCategoryId)}
-                  onChange={(event) =>
-                    handleCategoryChange(
-                      event.target.value === "all" ? null : Number(event.target.value)
-                    )
-                  }
-                >
-                  <option value="all">전체 카테고리</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
               </label>
               <button
                 type="button"
@@ -452,11 +490,6 @@ export function HomePage() {
                 필터 초기화
               </button>
             </div>
-            {selectedCategory ? (
-              <p className="field-hint">
-                현재 선택된 카테고리: <strong>{selectedCategory.name}</strong>
-              </p>
-            ) : null}
           </div>
         </div>
 

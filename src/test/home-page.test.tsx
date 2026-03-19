@@ -59,12 +59,14 @@ describe("HomePage", () => {
       {
         id: 1,
         name: "Outer",
-        itemCount: 1
+        itemCount: 1,
+        representativeImageUrl: "/outer-category.webp"
       },
       {
         id: 2,
         name: "Knit",
-        itemCount: 1
+        itemCount: 1,
+        representativeImageUrl: "/knit-category.webp"
       }
     ]);
     vi.mocked(fetchPosts).mockResolvedValue([]);
@@ -99,7 +101,7 @@ describe("HomePage", () => {
     });
   });
 
-  it("renders live category shortcut cards from API data", async () => {
+  it("renders live category shortcut cards with representative images from API data", async () => {
     render(
       <MemoryRouter>
         <HomePage />
@@ -110,6 +112,14 @@ describe("HomePage", () => {
       await screen.findByRole("heading", { level: 2, name: "가격대 상위 상품" })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Outer/ })).toBeInTheDocument();
+    expect(screen.getByAltText("Outer 대표 이미지")).toHaveAttribute(
+      "src",
+      "/outer-category.webp"
+    );
+    expect(screen.getByAltText("Knit 대표 이미지")).toHaveAttribute(
+      "src",
+      "/knit-category.webp"
+    );
     expect(screen.getAllByText("1개 상품이 연결된 카테고리")).toHaveLength(2);
     expect(screen.getByText("카테고리 필터")).toBeInTheDocument();
   });
@@ -130,6 +140,26 @@ describe("HomePage", () => {
       keyword: "",
       categoryId: 2
     });
+  });
+
+  it("shows a placeholder copy when a category has no representative image", async () => {
+    vi.mocked(fetchCategories).mockResolvedValueOnce([
+      {
+        id: 3,
+        name: "Empty",
+        itemCount: 0,
+        representativeImageUrl: null
+      }
+    ]);
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole("button", { name: /Empty/ })).toBeInTheDocument();
+    expect(screen.getByText("아직 해당 카테고리에 상품이 없습니다.")).toBeInTheDocument();
   });
 
   it("anchors the search field and preserves catalog height while filtering", async () => {

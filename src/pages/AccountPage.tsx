@@ -13,6 +13,16 @@ import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
 import { formatCurrency, formatDateTime } from "../lib/format";
 
+function getPostPreview(content: string) {
+  const normalized = content.replace(/\s+/g, " ").trim();
+
+  if (!normalized) {
+    return "본문 미리보기가 없습니다.";
+  }
+
+  return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
+}
+
 export function AccountPage() {
   const { user, refreshSession } = useSession();
   const [page, setPage] = useState<MyPage | null>(null);
@@ -118,6 +128,10 @@ export function AccountPage() {
     );
   }
 
+  const cartItems = page?.cartItems ?? [];
+  const orders = page?.orders ?? [];
+  const posts = page?.posts ?? [];
+
   return (
     <div className="page-stack">
       <div className="section-header">
@@ -174,14 +188,14 @@ export function AccountPage() {
           <p className="eyebrow">CART SNAPSHOT</p>
           <h2>마이페이지 장바구니 상품</h2>
           <ul className="stack-list">
-            {(page?.cartItems ?? []).map((entry) => (
+            {cartItems.map((entry) => (
               <li key={entry.id}>
                 <strong>{entry.itemName}</strong>
                 <span>{formatCurrency(entry.price)}</span>
               </li>
             ))}
           </ul>
-          {(page?.cartItems ?? []).length === 0 ? (
+          {cartItems.length === 0 ? (
             <p className="muted-copy">현재 마이페이지에 노출되는 장바구니 상품이 없습니다.</p>
           ) : null}
         </section>
@@ -195,7 +209,7 @@ export function AccountPage() {
           </div>
         </div>
         <div className="order-list">
-          {(page?.orders ?? []).map((order) => (
+          {orders.map((order) => (
             <article key={order.id} className="order-card">
               <div>
                 <strong>주문 #{order.id}</strong>
@@ -223,28 +237,56 @@ export function AccountPage() {
               ) : null}
             </article>
           ))}
-          {(page?.orders ?? []).length === 0 ? (
+          {orders.length === 0 ? (
             <p className="muted-copy">아직 주문 내역이 없습니다.</p>
           ) : null}
         </div>
       </section>
 
-      <section className="surface-card">
-        <div className="section-header">
+      <section className="surface-card account-posts-section">
+        <div className="section-header section-header-wide">
           <div>
             <p className="eyebrow">POSTS</p>
             <h2>내 게시물</h2>
+            <p className="section-description">
+              작성한 게시글을 카드형으로 나눠서 보고, 커뮤니티 상세 페이지로 바로 이동할 수
+              있게 정리했습니다.
+            </p>
+          </div>
+          <div className="account-post-summary">
+            <span className="account-post-badge">총 {posts.length}개</span>
+            <p className="field-hint">
+              {posts.length > 0
+                ? "최근 작성한 게시물부터 한 장씩 구분해서 볼 수 있습니다."
+                : "아직 작성한 게시물이 없습니다."}
+            </p>
           </div>
         </div>
-        <ul className="stack-list">
-          {(page?.posts ?? []).map((post) => (
-            <li key={post.id}>
-              <Link to={`/community/${post.id}`}>{post.title}</Link>
-              <span>{formatDateTime(post.createdDate)}</span>
-            </li>
+
+        <div className="account-post-grid">
+          {posts.map((post, index) => (
+            <article key={post.id} className="account-post-card">
+              <div className="account-post-meta">
+                <span className="account-post-index">{`POST ${String(index + 1).padStart(2, "0")}`}</span>
+                <time dateTime={post.createdDate}>{formatDateTime(post.createdDate)}</time>
+              </div>
+              <div className="account-post-copy">
+                <Link to={`/community/${post.id}`} className="account-post-title">
+                  {post.title}
+                </Link>
+                <p className="account-post-excerpt">{getPostPreview(post.content)}</p>
+              </div>
+              <div className="account-post-footer">
+                <span className="account-post-badge">댓글 {post.comments.length}개</span>
+                <Link to={`/community/${post.id}`} className="ghost-button link-button">
+                  게시물 보기
+                </Link>
+              </div>
+            </article>
           ))}
-        </ul>
-        {(page?.posts ?? []).length === 0 ? (
+        </div>
+
+        {posts.length === 0 ? (
           <p className="muted-copy">작성한 게시물이 없습니다.</p>
         ) : null}
       </section>

@@ -1,16 +1,15 @@
 import { dispatchAuthRequired } from "../lib/auth";
 import type {
   Cart,
+  CartItem,
   Category,
   Comment,
   Item,
   ItemMutationInput,
-  LoginResponse,
   MyPage,
   Order,
+  OrderItem,
   Post,
-  RawPost,
-  RawUserResponse,
   SessionPayload,
   User
 } from "./types";
@@ -19,6 +18,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 const REFRESH_PATH = "/api/auth/refresh";
 const LOGOUT_PATH = "/api/auth/logout";
 type AuthPolicy = "default" | "protected";
+type UnknownRecord = Record<string, unknown>;
 
 interface RequestOptions {
   authPolicy?: AuthPolicy;
@@ -40,6 +40,245 @@ export class ApiError extends Error {
     this.status = status;
     this.details = details;
   }
+}
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function asNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function requireRecord(payload: unknown, message: string): UnknownRecord {
+  if (!isRecord(payload)) {
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
+function requireArray(payload: unknown, message: string): unknown[] {
+  if (!Array.isArray(payload)) {
+    throw new Error(message);
+  }
+
+  return payload;
+}
+
+function normalizeUser(payload: unknown): User | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const id = asNumber(payload.id);
+  const email = asString(payload.email);
+  const name = asString(payload.name);
+  const role = payload.role;
+
+  if (
+    id === null ||
+    !email ||
+    !name ||
+    (role !== "USER" && role !== "ADMIN")
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    email,
+    name,
+    role
+  };
+}
+
+function normalizeItem(payload: unknown): Item | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const id = asNumber(payload.id);
+  const itemName = asString(payload.itemName);
+  const price = asNumber(payload.price);
+  const quantity = asNumber(payload.quantity);
+
+  if (id === null || !itemName || price === null || quantity === null) {
+    return null;
+  }
+
+  return {
+    id,
+    itemName,
+    price,
+    quantity,
+    categoryId: asNumber(payload.categoryId),
+    categoryName: asString(payload.categoryName),
+    imageUrl: asString(payload.imageUrl)
+  };
+}
+
+function normalizeItems(payload: unknown, message: string): Item[] {
+  return requireArray(payload, message)
+    .map((item) => normalizeItem(item))
+    .filter((item): item is Item => item !== null);
+}
+
+function normalizeCategory(payload: unknown): Category | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const id = asNumber(payload.id);
+  const name = asString(payload.name);
+
+  if (id === null || !name) {
+    return null;
+  }
+
+  const itemCount = asNumber(payload.itemCount);
+
+  return {
+    id,
+    name,
+    representativeImageUrl: asString(payload.representativeImageUrl),
+    itemCount: itemCount ?? undefined
+  };
+}
+
+function normalizeCategories(payload: unknown, message: string): Category[] {
+  return requireArray(payload, message)
+    .map((category) => normalizeCategory(category))
+    .filter((category): category is Category => category !== null);
+}
+
+function normalizeCartItem(payload: unknown): CartItem | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const item = normalizeItem(payload.item);
+  const quantity = asNumber(payload.quantity);
+
+  if (!item || quantity === null) {
+    return null;
+  }
+
+  return {
+    item,
+    quantity
+  };
+}
+
+function normalizeOrderItem(payload: unknown): OrderItem | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const itemName = asString(payload.itemName);
+  const price = asNumber(payload.price);
+  const quantity = asNumber(payload.quantity);
+
+  if (!itemName || price === null || quantity === null) {
+    return null;
+  }
+
+  return {
+    itemName,
+    price,
+    quantity
+  };
+}
+
+function normalizeOrder(payload: unknown): Order | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const id = asNumber(payload.id);
+  const orderDate = asString(payload.orderDate);
+  const status = asString(payload.status);
+
+  if (id === null || !orderDate || !status) {
+    return null;
+  }
+
+  return {
+    id,
+    orderDate,
+    status,
+    orderItems: Array.isArray(payload.orderItems)
+      ? payload.orderItems
+          .map((orderItem) => normalizeOrderItem(orderItem))
+          .filter((orderItem): orderItem is OrderItem => orderItem !== null)
+      : []
+  };
+}
+
+function normalizeOrders(payload: unknown, message: string): Order[] {
+  return requireArray(payload, message)
+    .map((order) => normalizeOrder(order))
+    .filter((order): order is Order => order !== null);
+}
+
+function normalizeComment(payload: unknown): Comment | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const id = asNumber(payload.id);
+  const content = asString(payload.content);
+  const username = asString(payload.username);
+  const createdDate = asString(payload.createdDate);
+
+  if (id === null || !content || !username || !createdDate) {
+    return null;
+  }
+
+  return {
+    id,
+    content,
+    username,
+    createdDate
+  };
+}
+
+function normalizePost(payload: unknown): Post | null {
+  if (!isRecord(payload)) {
+    return null;
+  }
+
+  const id = asNumber(payload.id);
+  const title = asString(payload.title);
+  const content = asString(payload.content);
+  const createdDate = asString(payload.createdDate);
+
+  if (id === null || !title || !content || !createdDate) {
+    return null;
+  }
+
+  return {
+    id,
+    title,
+    content,
+    author: asString(payload.author) ?? asString(payload.authorName) ?? "Unknown",
+    comments: Array.isArray(payload.comments)
+      ? payload.comments
+          .map((comment) => normalizeComment(comment))
+          .filter((comment): comment is Comment => comment !== null)
+      : [],
+    createdDate
+  };
+}
+
+function normalizePosts(payload: unknown, message: string): Post[] {
+  return requireArray(payload, message)
+    .map((post) => normalizePost(post))
+    .filter((post): post is Post => post !== null);
 }
 
 function buildUrl(path: string): string {
@@ -224,26 +463,28 @@ function toItemFormData(input: ItemMutationInput): FormData {
   return formData;
 }
 
-function normalizeCart(cart: Partial<Cart> | null | undefined): Cart {
-  return {
-    cartItems: cart?.cartItems ?? [],
-    allPrice:
-      typeof cart?.allPrice === "number"
-        ? cart.allPrice
-        : (cart?.cartItems ?? []).reduce((sum, cartItem) => {
-            return sum + cartItem.item.price * cartItem.quantity;
-          }, 0)
-  };
-}
+function normalizeCart(cart: unknown): Cart {
+  if (!isRecord(cart)) {
+    return {
+      cartItems: [],
+      allPrice: 0
+    };
+  }
 
-function normalizePost(post: RawPost): Post {
+  const cartItems = Array.isArray(cart.cartItems)
+    ? cart.cartItems
+        .map((cartItem) => normalizeCartItem(cartItem))
+        .filter((cartItem): cartItem is CartItem => cartItem !== null)
+    : [];
+  const allPrice = asNumber(cart.allPrice);
+
   return {
-    id: post.id,
-    title: post.title,
-    content: post.content,
-    author: post.author ?? post.authorName ?? "Unknown",
-    comments: post.comments ?? [],
-    createdDate: post.createdDate
+    cartItems,
+    allPrice:
+      allPrice ??
+      cartItems.reduce((sum, cartItem) => {
+        return sum + cartItem.item.price * cartItem.quantity;
+      }, 0)
   };
 }
 
@@ -272,11 +513,19 @@ export function toAppErrorMessage(
 
 export async function fetchSession(): Promise<SessionPayload> {
   try {
-    const response = await request<RawUserResponse>("/api");
+    const response = requireRecord(
+      await request<unknown>("/api"),
+      "세션 응답 형식이 올바르지 않습니다."
+    );
+    const user = normalizeUser(response.userDto);
+
+    if (!user) {
+      throw new Error("세션 사용자 정보가 올바르지 않습니다.");
+    }
 
     return {
-      user: response.userDto,
-      items: response.itemDto
+      user,
+      items: normalizeItems(response.itemDto, "세션 상품 목록 형식이 올바르지 않습니다.")
     };
   } catch (error) {
     if (isUnauthorizedError(error)) {
@@ -291,7 +540,8 @@ export async function fetchSession(): Promise<SessionPayload> {
 }
 
 export async function login(email: string, password: string): Promise<User> {
-  const response = await request<LoginResponse>(
+  const response = requireRecord(
+    await request<unknown>(
     "/api/login",
     {
       method: "POST",
@@ -306,9 +556,16 @@ export async function login(email: string, password: string): Promise<User> {
     {
       skipAuthRefresh: true
     }
+    ),
+    "로그인 응답 형식이 올바르지 않습니다."
   );
+  const user = normalizeUser(response.user);
 
-  return response.user;
+  if (!user) {
+    throw new Error("로그인 사용자 정보가 올바르지 않습니다.");
+  }
+
+  return user;
 }
 
 export async function register(input: {
@@ -316,13 +573,21 @@ export async function register(input: {
   email: string;
   password: string;
 }): Promise<User> {
-  return request<User>("/api/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(input)
-  });
+  const user = normalizeUser(
+    await request<unknown>("/api/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(input)
+    })
+  );
+
+  if (!user) {
+    throw new Error("회원가입 응답 형식이 올바르지 않습니다.");
+  }
+
+  return user;
 }
 
 export async function logout(): Promise<void> {
@@ -341,41 +606,132 @@ export async function fetchItems(filters?: {
   keyword?: string;
   categoryId?: number | null;
 }): Promise<Item[]> {
-  return request<Item[]>(buildItemQuery(filters));
+  return normalizeItems(
+    await request<unknown>(buildItemQuery(filters)),
+    "상품 목록 응답 형식이 올바르지 않습니다."
+  );
 }
 
 export async function fetchItem(itemId: number): Promise<Item> {
-  return request<Item>(`/api/items/${itemId}`);
+  const item = normalizeItem(await request<unknown>(`/api/items/${itemId}`));
+
+  if (!item) {
+    throw new Error("상품 응답 형식이 올바르지 않습니다.");
+  }
+
+  return item;
 }
 
 export async function fetchCategories(): Promise<Category[]> {
-  return request<Category[]>("/api/categories");
+  return normalizeCategories(
+    await request<unknown>("/api/categories"),
+    "카테고리 목록 응답 형식이 올바르지 않습니다."
+  );
+}
+
+export async function createCategory(input: { name: string }): Promise<Category> {
+  const category = normalizeCategory(
+    await request<unknown>(
+      "/api/categories",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(input)
+      },
+      {
+        authPolicy: "protected"
+      }
+    )
+  );
+
+  if (!category) {
+    throw new Error("카테고리 생성 응답 형식이 올바르지 않습니다.");
+  }
+
+  return category;
+}
+
+export async function updateCategory(
+  categoryId: number,
+  input: { name: string }
+): Promise<Category> {
+  const category = normalizeCategory(
+    await request<unknown>(
+      `/api/categories/${categoryId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(input)
+      },
+      {
+        authPolicy: "protected"
+      }
+    )
+  );
+
+  if (!category) {
+    throw new Error("카테고리 수정 응답 형식이 올바르지 않습니다.");
+  }
+
+  return category;
+}
+
+export async function deleteCategory(categoryId: number): Promise<void> {
+  await request(
+    `/api/categories/${categoryId}`,
+    {
+      method: "DELETE"
+    },
+    {
+      authPolicy: "protected"
+    }
+  );
 }
 
 export async function createItem(input: ItemMutationInput): Promise<Item> {
-  return request<Item>(
-    "/api/items",
-    {
-      method: "POST",
-      body: toItemFormData(input)
-    },
-    {
-      authPolicy: "protected"
-    }
+  const item = normalizeItem(
+    await request<unknown>(
+      "/api/items",
+      {
+        method: "POST",
+        body: toItemFormData(input)
+      },
+      {
+        authPolicy: "protected"
+      }
+    )
   );
+
+  if (!item) {
+    throw new Error("상품 생성 응답 형식이 올바르지 않습니다.");
+  }
+
+  return item;
 }
 
 export async function updateItem(itemId: number, input: ItemMutationInput): Promise<Item> {
-  return request<Item>(
-    `/api/items/${itemId}`,
-    {
-      method: "PUT",
-      body: toItemFormData(input)
-    },
-    {
-      authPolicy: "protected"
-    }
+  const item = normalizeItem(
+    await request<unknown>(
+      `/api/items/${itemId}`,
+      {
+        method: "PUT",
+        body: toItemFormData(input)
+      },
+      {
+        authPolicy: "protected"
+      }
+    )
   );
+
+  if (!item) {
+    throw new Error("상품 수정 응답 형식이 올바르지 않습니다.");
+  }
+
+  return item;
 }
 
 export async function deleteItem(itemId: number): Promise<void> {
@@ -392,7 +748,7 @@ export async function deleteItem(itemId: number): Promise<void> {
 
 export async function fetchCart(): Promise<Cart> {
   try {
-    const cart = await request<Cart>("/api/cart", {}, {
+    const cart = await request<unknown>("/api/cart", {}, {
       authPolicy: "protected"
     });
     return normalizeCart(cart);
@@ -406,7 +762,7 @@ export async function fetchCart(): Promise<Cart> {
 }
 
 export async function addToCart(itemId: number, quantity: number): Promise<Cart> {
-  const cart = await request<Cart>(
+  const cart = await request<unknown>(
     `/api/cart/items/${itemId}`,
     {
       method: "POST",
@@ -428,7 +784,7 @@ export async function addToCart(itemId: number, quantity: number): Promise<Cart>
 }
 
 export async function removeCartItem(itemId: number): Promise<Cart> {
-  const cart = await request<Cart>(
+  const cart = await request<unknown>(
     `/api/cart/items/${itemId}`,
     {
       method: "DELETE"
@@ -442,41 +798,73 @@ export async function removeCartItem(itemId: number): Promise<Cart> {
 }
 
 export async function checkout(): Promise<Order> {
-  return request<Order>(
-    "/api/orders",
-    {
-      method: "POST"
-    },
-    {
-      authPolicy: "protected"
-    }
+  const order = normalizeOrder(
+    await request<unknown>(
+      "/api/orders",
+      {
+        method: "POST"
+      },
+      {
+        authPolicy: "protected"
+      }
+    )
   );
+
+  if (!order) {
+    throw new Error("주문 응답 형식이 올바르지 않습니다.");
+  }
+
+  return order;
 }
 
 export async function cancelOrder(orderId: number): Promise<Order> {
-  return request<Order>(
-    `/api/orders/${orderId}`,
-    {
-      method: "DELETE"
-    },
-    {
-      authPolicy: "protected"
-    }
+  const order = normalizeOrder(
+    await request<unknown>(
+      `/api/orders/${orderId}`,
+      {
+        method: "DELETE"
+      },
+      {
+        authPolicy: "protected"
+      }
+    )
   );
+
+  if (!order) {
+    throw new Error("주문 취소 응답 형식이 올바르지 않습니다.");
+  }
+
+  return order;
 }
 
 export async function fetchMyPage(): Promise<MyPage> {
-  const page = await request<MyPage>(
-    "/api/myPage",
-    {},
-    {
-      authPolicy: "protected"
-    }
+  const page = requireRecord(
+    await request<unknown>(
+      "/api/myPage",
+      {},
+      {
+        authPolicy: "protected"
+      }
+    ),
+    "마이페이지 응답 형식이 올바르지 않습니다."
   );
+  const user = normalizeUser(page.user);
+
+  if (!user) {
+    throw new Error("마이페이지 사용자 정보가 올바르지 않습니다.");
+  }
 
   return {
-    ...page,
-    posts: (page.posts ?? []).map((post) => normalizePost(post as RawPost))
+    user,
+    orders: Array.isArray(page.orders)
+      ? normalizeOrders(page.orders, "주문 목록 응답 형식이 올바르지 않습니다.")
+      : [],
+    posts: Array.isArray(page.posts)
+      ? normalizePosts(page.posts, "게시물 목록 응답 형식이 올바르지 않습니다.")
+      : [],
+    cartItems: Array.isArray(page.cartItems)
+      ? normalizeItems(page.cartItems, "장바구니 상품 응답 형식이 올바르지 않습니다.")
+      : []
   };
 }
 
@@ -484,71 +872,98 @@ export async function updateProfile(input: {
   name: string;
   email: string;
 }): Promise<User> {
-  return request<User>(
-    "/api/users",
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
+  const user = normalizeUser(
+    await request<unknown>(
+      "/api/users",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(input)
       },
-      body: JSON.stringify(input)
-    },
-    {
-      authPolicy: "protected"
-    }
+      {
+        authPolicy: "protected"
+      }
+    )
   );
+
+  if (!user) {
+    throw new Error("회원 정보 응답 형식이 올바르지 않습니다.");
+  }
+
+  return user;
 }
 
 export async function fetchPosts(): Promise<Post[]> {
-  const posts = await request<RawPost[]>("/api/posts");
-  return posts.map(normalizePost);
+  return normalizePosts(
+    await request<unknown>("/api/posts"),
+    "게시물 목록 응답 형식이 올바르지 않습니다."
+  );
 }
 
 export async function fetchPost(postId: number): Promise<Post> {
-  const post = await request<RawPost>(`/api/posts/${postId}`);
-  return normalizePost(post);
+  const post = normalizePost(await request<unknown>(`/api/posts/${postId}`));
+
+  if (!post) {
+    throw new Error("게시물 응답 형식이 올바르지 않습니다.");
+  }
+
+  return post;
 }
 
 export async function createPost(input: {
   title: string;
   content: string;
 }): Promise<Post> {
-  const post = await request<RawPost>(
-    "/api/posts",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+  const post = normalizePost(
+    await request<unknown>(
+      "/api/posts",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(input)
       },
-      body: JSON.stringify(input)
-    },
-    {
-      authPolicy: "protected"
-    }
+      {
+        authPolicy: "protected"
+      }
+    )
   );
 
-  return normalizePost(post);
+  if (!post) {
+    throw new Error("게시물 생성 응답 형식이 올바르지 않습니다.");
+  }
+
+  return post;
 }
 
 export async function updatePost(
   postId: number,
   input: { title: string; content: string }
 ): Promise<Post> {
-  const post = await request<RawPost>(
-    `/api/posts/${postId}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
+  const post = normalizePost(
+    await request<unknown>(
+      `/api/posts/${postId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(input)
       },
-      body: JSON.stringify(input)
-    },
-    {
-      authPolicy: "protected"
-    }
+      {
+        authPolicy: "protected"
+      }
+    )
   );
 
-  return normalizePost(post);
+  if (!post) {
+    throw new Error("게시물 수정 응답 형식이 올바르지 않습니다.");
+  }
+
+  return post;
 }
 
 export async function deletePost(postId: number): Promise<void> {
@@ -564,18 +979,26 @@ export async function deletePost(postId: number): Promise<void> {
 }
 
 export async function createComment(postId: number, content: string): Promise<Comment> {
-  return request<Comment>(
-    `/api/posts/${postId}/comments`,
-    {
-      method: "POST",
-      body: new URLSearchParams({
-        reply_content: content
-      })
-    },
-    {
-      authPolicy: "protected"
-    }
+  const comment = normalizeComment(
+    await request<unknown>(
+      `/api/posts/${postId}/comments`,
+      {
+        method: "POST",
+        body: new URLSearchParams({
+          reply_content: content
+        })
+      },
+      {
+        authPolicy: "protected"
+      }
+    )
   );
+
+  if (!comment) {
+    throw new Error("댓글 응답 형식이 올바르지 않습니다.");
+  }
+
+  return comment;
 }
 
 export async function updateComment(
@@ -583,18 +1006,26 @@ export async function updateComment(
   commentId: number,
   content: string
 ): Promise<Comment> {
-  return request<Comment>(
-    `/api/posts/${postId}/comments/${commentId}`,
-    {
-      method: "PUT",
-      body: new URLSearchParams({
-        reply_content: content
-      })
-    },
-    {
-      authPolicy: "protected"
-    }
+  const comment = normalizeComment(
+    await request<unknown>(
+      `/api/posts/${postId}/comments/${commentId}`,
+      {
+        method: "PUT",
+        body: new URLSearchParams({
+          reply_content: content
+        })
+      },
+      {
+        authPolicy: "protected"
+      }
+    )
   );
+
+  if (!comment) {
+    throw new Error("댓글 응답 형식이 올바르지 않습니다.");
+  }
+
+  return comment;
 }
 
 export async function deleteComment(postId: number, commentId: number): Promise<void> {

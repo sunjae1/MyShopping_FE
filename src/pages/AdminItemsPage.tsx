@@ -8,6 +8,7 @@ import {
   updateItem
 } from "../api/client";
 import type { Category, Item, ItemMutationInput } from "../api/types";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { EmptyState } from "../components/EmptyState";
 import { StatusBanner } from "../components/StatusBanner";
 import { formatCurrency, formatNumber, resolveImageUrl } from "../lib/format";
@@ -39,6 +40,7 @@ export function AdminItemsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<Item | null>(null);
 
   const activeCategoryId =
     selectedCategoryId === "all" ? null : Number(selectedCategoryId);
@@ -180,10 +182,6 @@ export function AdminItemsPage() {
   }
 
   async function handleDelete(item: Item) {
-    if (!window.confirm(`상품 "${item.itemName}"을 삭제할까요?`)) {
-      return;
-    }
-
     setDeletingItemId(item.id);
     setFeedback(null);
 
@@ -203,6 +201,33 @@ export function AdminItemsPage() {
 
   return (
     <div className="page-stack">
+      <ConfirmModal
+        open={pendingDeleteItem !== null}
+        title="상품을 삭제할까요?"
+        description={
+          pendingDeleteItem
+            ? `"${pendingDeleteItem.itemName}" 상품을 삭제하면 목록에서 바로 사라집니다.`
+            : ""
+        }
+        confirmLabel="상품 삭제"
+        tone="danger"
+        busy={pendingDeleteItem !== null && deletingItemId === pendingDeleteItem.id}
+        onCancel={() => {
+          if (deletingItemId !== null) {
+            return;
+          }
+          setPendingDeleteItem(null);
+        }}
+        onConfirm={() => {
+          if (!pendingDeleteItem) {
+            return;
+          }
+          void handleDelete(pendingDeleteItem).finally(() => {
+            setPendingDeleteItem(null);
+          });
+        }}
+      />
+
       <div className="section-header">
         <div>
           <p className="eyebrow">ADMIN MERCH</p>
@@ -247,16 +272,6 @@ export function AdminItemsPage() {
 
             <div className="admin-toolbar">
               <label className="search-shell">
-                <span>상품명 검색</span>
-                <input
-                  type="search"
-                  placeholder="예: Alpha Coat"
-                  value={keyword}
-                  onChange={(event) => setKeyword(event.target.value)}
-                />
-              </label>
-
-              <label className="search-shell">
                 <span>카테고리</span>
                 <select
                   value={selectedCategoryId}
@@ -269,6 +284,16 @@ export function AdminItemsPage() {
                     </option>
                   ))}
                 </select>
+              </label>
+
+              <label className="search-shell">
+                <span>상품명 검색</span>
+                <input
+                  type="search"
+                  placeholder="예: Alpha Coat"
+                  value={keyword}
+                  onChange={(event) => setKeyword(event.target.value)}
+                />
               </label>
             </div>
           </section>
@@ -324,7 +349,7 @@ export function AdminItemsPage() {
                         type="button"
                         className="ghost-button"
                         disabled={deletingItemId === item.id}
-                        onClick={() => void handleDelete(item)}
+                        onClick={() => setPendingDeleteItem(item)}
                       >
                         {deletingItemId === item.id ? "삭제 중..." : "삭제"}
                       </button>

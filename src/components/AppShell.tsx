@@ -87,9 +87,14 @@ export function AppShell() {
               커뮤니티
             </NavLink>
             {user?.role === "ADMIN" ? (
-              <NavLink to="/admin/items" className={linkClassName}>
-                상품 관리
-              </NavLink>
+              <>
+                <NavLink to="/admin/items" className={linkClassName}>
+                  상품 관리
+                </NavLink>
+                <NavLink to="/admin/categories" className={linkClassName}>
+                  카테고리 관리
+                </NavLink>
+              </>
             ) : null}
             <NavLink to="/account" className={linkClassName}>
               마이페이지

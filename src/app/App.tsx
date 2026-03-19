@@ -4,6 +4,7 @@ import { RequireAuth } from "../components/RequireAuth";
 import { CartProvider } from "../contexts/CartContext";
 import { SessionProvider } from "../contexts/SessionContext";
 import { AccountPage } from "../pages/AccountPage";
+import { AdminCategoriesPage } from "../pages/AdminCategoriesPage";
 import { AdminItemsPage } from "../pages/AdminItemsPage";
 import { CartPage } from "../pages/CartPage";
 import { CommunityDetailPage } from "../pages/CommunityDetailPage";
@@ -36,6 +37,7 @@ export function App() {
               </Route>
               <Route element={<RequireAuth allowedRoles={["ADMIN"]} />}>
                 <Route path="/admin/items" element={<AdminItemsPage />} />
+                <Route path="/admin/categories" element={<AdminCategoriesPage />} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>
