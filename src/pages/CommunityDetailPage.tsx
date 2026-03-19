@@ -204,7 +204,7 @@ export function CommunityDetailPage() {
       <div className="page-stack">
         <StatusBanner tone="error">{feedback ?? "게시글을 찾을 수 없습니다."}</StatusBanner>
         <button type="button" className="ghost-button" onClick={() => void handleRefresh()}>
-          다시 시도
+          다시 불러오기
         </button>
       </div>
     );
@@ -245,11 +245,11 @@ export function CommunityDetailPage() {
 
       <div className="section-header">
         <div>
-          <p className="eyebrow">POST DETAIL</p>
+          <p className="eyebrow">STORY</p>
           <h1>{post.title}</h1>
         </div>
         <Link to="/community" className="ghost-button link-button">
-          목록으로
+          목록 보기
         </Link>
       </div>
 
@@ -313,14 +313,14 @@ export function CommunityDetailPage() {
                   className="ghost-button"
                   onClick={() => setEditingPost(true)}
                 >
-                  게시글 수정
+                  수정하기
                 </button>
                 <button
                   type="button"
                   className="ghost-button"
                   onClick={() => void handleDeletePost()}
                 >
-                  게시글 삭제
+                  삭제하기
                 </button>
               </div>
             ) : null}
@@ -406,7 +406,7 @@ export function CommunityDetailPage() {
         {user ? (
           <form className="auth-form" onSubmit={handleCreateComment}>
             <label>
-              댓글 작성
+              댓글 남기기
               <textarea
                 rows={4}
                 required
@@ -415,11 +415,11 @@ export function CommunityDetailPage() {
               />
             </label>
             <button type="submit" className="primary-button">
-              댓글 등록
+              댓글 남기기
             </button>
           </form>
         ) : (
-          <p className="muted-copy">댓글 작성은 로그인 후 가능합니다.</p>
+          <p className="muted-copy">로그인 후 댓글을 남길 수 있습니다.</p>
         )}
       </section>
     </div>

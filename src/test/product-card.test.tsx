@@ -22,7 +22,7 @@ describe("ProductCard", () => {
     expect(screen.getByText("Essential Coat")).toBeInTheDocument();
     expect(screen.getByText(/179,000/)).toBeInTheDocument();
 
-    const links = screen.getAllByRole("link", { name: /essential coat|장바구니 담기/i });
+    const links = screen.getAllByRole("link", { name: /essential coat|상품 보기/i });
     expect(links).toHaveLength(2);
 
     for (const link of links) {

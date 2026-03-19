@@ -76,7 +76,7 @@ export function CommunityPage() {
       <div className="section-header">
         <div>
           <p className="eyebrow">COMMUNITY</p>
-          <h1>쇼핑몰 게시판</h1>
+          <h1>스타일 커뮤니티</h1>
         </div>
       </div>
 
@@ -84,8 +84,8 @@ export function CommunityPage() {
 
       <div className="community-layout">
         <section className="surface-card">
-          <p className="eyebrow">PUBLIC FEED</p>
-          <h2>전체 게시물</h2>
+          <p className="eyebrow">STORIES</p>
+          <h2>모든 이야기</h2>
           {loading ? <p className="muted-copy">게시글을 불러오는 중입니다.</p> : null}
           <div className="community-list">
             {posts.map((post) => (
@@ -108,7 +108,7 @@ export function CommunityPage() {
 
         <aside className="surface-card">
           <p className="eyebrow">WRITE</p>
-          <h2>새 게시글</h2>
+          <h2>오늘의 이야기 남기기</h2>
           {user ? (
             <form className="auth-form" onSubmit={handleCreatePost}>
               <label>
@@ -134,12 +134,12 @@ export function CommunityPage() {
                 />
               </label>
               <button type="submit" className="primary-button">
-                게시글 등록
+                이야기 올리기
               </button>
             </form>
           ) : (
             <p className="muted-copy">
-              게시글 작성은 로그인 후 가능합니다. 공개 목록은 로그인 없이 확인할 수
+              로그인 후 스타일 팁이나 쇼핑 후기를 남길 수 있습니다. 목록은 누구나 볼 수
               있습니다.
             </p>
           )}

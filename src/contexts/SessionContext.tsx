@@ -29,7 +29,7 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 
 function toSessionErrorMessage(error: unknown): string {
   if (error instanceof TypeError) {
-    return "백엔드 서버에 연결하지 못했습니다. 서버 실행 상태를 확인해 주세요.";
+    return "스토어 연결이 잠시 불안정합니다. 잠시 후 다시 시도해 주세요.";
   }
 
   return toAppErrorMessage(

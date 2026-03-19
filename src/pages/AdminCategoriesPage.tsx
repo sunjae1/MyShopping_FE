@@ -182,7 +182,7 @@ export function AdminCategoriesPage() {
           <p className="eyebrow">ADMIN CATEGORY</p>
           <h1>카테고리 관리</h1>
           <p className="section-description">
-            `ADMIN` 권한 사용자만 `/api/categories` 생성, 수정, 삭제를 사용할 수 있습니다.
+            스토어 분류를 정리하고 메인에 보여줄 카테고리 구성을 관리해 보세요.
           </p>
         </div>
       </div>
@@ -193,17 +193,17 @@ export function AdminCategoriesPage() {
         <article className="surface-card">
           <p className="eyebrow">TOTAL</p>
           <h2>{formatNumber(stats.totalCount)}개</h2>
-          <p className="muted-copy">현재 등록된 전체 카테고리 수입니다.</p>
+          <p className="muted-copy">현재 운영 중인 전체 카테고리 수입니다.</p>
         </article>
         <article className="surface-card">
           <p className="eyebrow">LINKED</p>
           <h2>{formatNumber(stats.linkedCount)}개</h2>
-          <p className="muted-copy">대표 이미지가 잡히는, 상품 연결이 있는 카테고리입니다.</p>
+          <p className="muted-copy">상품이 연결되어 바로 노출할 수 있는 카테고리입니다.</p>
         </article>
         <article className="surface-card">
           <p className="eyebrow">EMPTY</p>
           <h2>{formatNumber(stats.emptyCount)}개</h2>
-          <p className="muted-copy">아직 상품이 연결되지 않은 카테고리입니다.</p>
+          <p className="muted-copy">아직 상품이 연결되지 않은 준비 중 카테고리입니다.</p>
         </article>
       </section>
 
@@ -217,13 +217,13 @@ export function AdminCategoriesPage() {
               </div>
             </div>
 
-            {loading ? <div className="surface-card">카테고리 목록을 불러오는 중입니다.</div> : null}
+            {loading ? <div className="surface-card">카테고리 목록을 가져오는 중입니다.</div> : null}
 
             {!loading && categories.length === 0 ? (
               <EmptyState
                 eyebrow="EMPTY"
                 title="등록된 카테고리가 없습니다."
-                description="오른쪽 폼에서 첫 카테고리를 만들어 주세요."
+                description="오른쪽 입력창에서 첫 카테고리를 만들어 보세요."
               />
             ) : null}
 
@@ -254,7 +254,7 @@ export function AdminCategoriesPage() {
                         <h3>{category.name}</h3>
                       </div>
                       <p className="muted-copy">
-                        연결 상품 {formatNumber(category.itemCount ?? 0)}개
+                        등록 상품 {formatNumber(category.itemCount ?? 0)}개
                       </p>
                     </div>
                     <div className="admin-item-actions">
@@ -311,8 +311,7 @@ export function AdminCategoriesPage() {
               <div>
                 <strong>{editingCategory.name}</strong>
                 <p className="muted-copy">
-                  대표 이미지는 카테고리 자체 업로드가 아니라 현재 연결된 상품 이미지에서
-                  자동으로 잡힙니다.
+                  대표 이미지는 연결된 상품 사진을 기준으로 자동으로 보여집니다.
                 </p>
               </div>
             </div>
@@ -334,8 +333,7 @@ export function AdminCategoriesPage() {
             </label>
 
             <p className="field-hint">
-              생성 후 상품 관리 화면에서 상품을 연결하면 대표 이미지와 상품 수가 자동으로
-              반영됩니다.
+              카테고리를 만든 뒤 상품을 연결하면 대표 이미지와 상품 수가 함께 반영됩니다.
             </p>
 
             <div className="inline-actions">
@@ -347,7 +345,7 @@ export function AdminCategoriesPage() {
                     : "카테고리 생성"}
               </button>
               <button type="button" className="ghost-button" onClick={resetForm}>
-                입력 초기화
+                다시 입력
               </button>
             </div>
           </form>

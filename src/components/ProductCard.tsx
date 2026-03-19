@@ -14,16 +14,16 @@ export function ProductCard({ item }: ProductCardProps) {
   const state =
     item.quantity <= 0
       ? {
-          label: "SOLD OUT",
+          label: "품절",
           tone: "soldout"
         }
       : item.quantity < 5
         ? {
-            label: "LOW STOCK",
+            label: "수량 한정",
             tone: "limited"
           }
         : {
-            label: "OPEN",
+            label: "판매중",
             tone: "live"
           };
 
@@ -51,7 +51,7 @@ export function ProductCard({ item }: ProductCardProps) {
         to={`/products/${item.id}`}
         className="secondary-button link-button product-card-cta"
       >
-        {item.quantity > 0 ? "장바구니 담기" : "품절"}
+        {item.quantity > 0 ? "상품 보기" : "품절"}
       </Link>
     </article>
   );

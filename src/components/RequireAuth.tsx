@@ -38,7 +38,7 @@ export function RequireAuth({ allowedRoles }: RequireAuthProps) {
   }, [refreshSession, user?.id, location.pathname, location.search, location.hash]);
 
   if (loading || verifying) {
-    return <div className="surface-card">세션을 확인하는 중입니다.</div>;
+    return <div className="surface-card">페이지를 준비하는 중입니다.</div>;
   }
 
   if (!user) {
@@ -55,9 +55,9 @@ export function RequireAuth({ allowedRoles }: RequireAuthProps) {
     return (
       <div className="surface-card">
         <p className="eyebrow">ACCESS DENIED</p>
-        <h2>관리자 권한이 필요한 페이지입니다.</h2>
+        <h2>운영자 전용 페이지입니다.</h2>
         <p className="muted-copy">
-          현재 로그인한 계정은 이 관리 화면에 접근할 수 없습니다.
+          현재 계정으로는 이 화면을 볼 수 없습니다. 다른 계정으로 다시 로그인해 주세요.
         </p>
       </div>
     );

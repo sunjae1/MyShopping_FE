@@ -47,11 +47,8 @@ export function LoginPage() {
     <section className="auth-shell">
       <div className="auth-card">
         <p className="eyebrow">LOGIN</p>
-        <h1>JWT 쿠키 기반 로그인</h1>
-        <p>
-          이 화면은 `/api/login`으로 로그인하고, Access/Refresh Token은 모두
-          HttpOnly 쿠키로 관리합니다.
-        </p>
+        <h1>다시 만나 반가워요</h1>
+        <p>관심 상품과 주문 내역을 이어서 확인하고 편하게 쇼핑을 계속해 보세요.</p>
 
         <StatusBanner tone="error">{bannerMessage}</StatusBanner>
 

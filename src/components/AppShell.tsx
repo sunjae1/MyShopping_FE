@@ -55,16 +55,16 @@ export function AppShell() {
         <div className="site-utility-bar">
           <div className="utility-inner">
             <div className="utility-copy">
-              <span>SELECT COMMERCE</span>
-              <span>프로모션, 랭킹, 카탈로그를 한 화면에서 빠르게 탐색</span>
+              <span>SEOUL SELECT CURATION</span>
+              <span>새로운 시즌 아이템과 감도 높은 셀렉션을 한눈에 만나보세요.</span>
             </div>
             <div className="utility-session">
               {loading ? (
-                <span>세션 확인 중</span>
+                <span>스토어 준비 중</span>
               ) : user ? (
-                <span>{user.name} 님, 회원 전용 장바구니를 사용할 수 있습니다.</span>
+                <span>{user.name} 님, 저장한 상품과 주문 내역을 편하게 이어서 보세요.</span>
               ) : (
-                <span>장바구니와 마이페이지는 로그인 후 이용할 수 있습니다.</span>
+                <span>로그인하면 장바구니와 마이페이지를 더 편하게 이용할 수 있습니다.</span>
               )}
             </div>
           </div>
@@ -106,7 +106,7 @@ export function AppShell() {
           </nav>
 
           <div className="header-actions">
-            {loading ? <span className="session-chip">세션 확인 중</span> : null}
+            {loading ? <span className="session-chip">스토어 준비 중</span> : null}
             {user ? (
               <>
                 <span className="session-chip">{user.name} 님</span>
@@ -136,10 +136,10 @@ export function AppShell() {
 
       <footer className="site-footer">
         <div>
-          <p className="eyebrow">CSR STOREFRONT</p>
+          <p className="eyebrow">SEOUL SELECT</p>
           <strong>Seoul Select Mall</strong>
         </div>
-        <p>Spring Boot API와 JWT HttpOnly 쿠키 인증을 연결한 React 쇼핑몰 프런트입니다.</p>
+        <p>감도 있는 데일리 셀렉션과 스타일 이야기를 함께 만나는 공간입니다.</p>
       </footer>
     </div>
   );

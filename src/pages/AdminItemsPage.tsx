@@ -233,7 +233,7 @@ export function AdminItemsPage() {
           <p className="eyebrow">ADMIN MERCH</p>
           <h1>상품 관리</h1>
           <p className="section-description">
-            `ADMIN` 권한 사용자만 `/api/items` 등록, 수정, 삭제를 사용할 수 있습니다.
+            스토어에 노출될 상품을 등록하고 판매 상태를 한곳에서 관리해 보세요.
           </p>
         </div>
       </div>
@@ -244,17 +244,17 @@ export function AdminItemsPage() {
         <article className="surface-card">
           <p className="eyebrow">VISIBLE ITEMS</p>
           <h2>{formatNumber(stats.visibleCount)}개</h2>
-          <p className="muted-copy">현재 필터 기준으로 보이는 상품 수입니다.</p>
+          <p className="muted-copy">현재 목록에서 확인 중인 상품 수입니다.</p>
         </article>
         <article className="surface-card">
           <p className="eyebrow">IN STOCK</p>
           <h2>{formatNumber(stats.inStockCount)}개</h2>
-          <p className="muted-copy">재고가 남아 있어 바로 판매 가능한 상품입니다.</p>
+          <p className="muted-copy">지금 바로 판매할 수 있는 상품입니다.</p>
         </article>
         <article className="surface-card">
           <p className="eyebrow">CATEGORIES</p>
           <h2>{formatNumber(stats.categoryCount)}개</h2>
-          <p className="muted-copy">상품 등록 시 선택할 수 있는 카테고리 수입니다.</p>
+          <p className="muted-copy">운영 중인 카테고리 수를 보여줍니다.</p>
         </article>
       </section>
 
@@ -264,7 +264,7 @@ export function AdminItemsPage() {
             <div className="section-header">
               <div>
                 <p className="eyebrow">FILTER</p>
-                <h2>상품 찾기</h2>
+                <h2>판매 상품 찾기</h2>
               </div>
             </div>
 
@@ -306,13 +306,13 @@ export function AdminItemsPage() {
               </div>
             </div>
 
-            {loading ? <div className="surface-card">상품 목록을 불러오는 중입니다.</div> : null}
+            {loading ? <div className="surface-card">상품 목록을 가져오는 중입니다.</div> : null}
 
             {!loading && items.length === 0 ? (
               <EmptyState
                 eyebrow="EMPTY"
                 title="조건에 맞는 상품이 없습니다."
-                description="검색어와 카테고리 조건을 바꿔 보거나 새 상품을 등록해 주세요."
+                description="검색 조건을 바꾸거나 새 상품을 등록해 보세요."
               />
             ) : null}
 
@@ -378,10 +378,8 @@ export function AdminItemsPage() {
             <div className="admin-preview-card">
               <img src={resolveImageUrl(editingItem.imageUrl)} alt={editingItem.itemName} />
               <div>
-                <strong>현재 등록된 이미지</strong>
-                <p className="muted-copy">
-                  새 파일을 고르면 이 이미지를 교체합니다.
-                </p>
+                <strong>현재 대표 이미지</strong>
+                <p className="muted-copy">새 파일을 선택하면 이 이미지로 교체됩니다.</p>
               </div>
             </div>
           ) : null}
@@ -463,7 +461,8 @@ export function AdminItemsPage() {
             </label>
 
             <p className="field-hint">
-              신규 등록은 이미지가 필요하고, 수정은 새 파일을 넣을 때만 이미지를 바꿉니다.
+              새 상품은 대표 이미지가 필요하며, 수정 시에는 새 파일을 올릴 때만 이미지가
+              바뀝니다.
             </p>
 
             <div className="inline-actions">
@@ -475,7 +474,7 @@ export function AdminItemsPage() {
                     : "상품 등록"}
               </button>
               <button type="button" className="ghost-button" onClick={resetForm}>
-                입력 초기화
+                다시 입력
               </button>
             </div>
           </form>

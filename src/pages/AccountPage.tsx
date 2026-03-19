@@ -17,7 +17,7 @@ function getPostPreview(content: string) {
   const normalized = content.replace(/\s+/g, " ").trim();
 
   if (!normalized) {
-    return "본문 미리보기가 없습니다.";
+    return "등록된 내용이 없습니다.";
   }
 
   return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
@@ -117,7 +117,7 @@ export function AccountPage() {
         <EmptyState
           eyebrow="PRIVATE AREA"
           title="마이페이지는 로그인 후 확인할 수 있습니다."
-          description="백엔드의 `/api/myPage`는 인증된 사용자에게만 열려 있습니다."
+          description="로그인 후 주문 내역과 계정 정보를 편하게 확인해 보세요."
         />
         <div className="inline-actions">
           <Link to="/login" className="primary-button link-button">
@@ -143,7 +143,7 @@ export function AccountPage() {
 
       <StatusBanner tone="info">{feedback}</StatusBanner>
 
-      {loading && !page ? <div className="surface-card">마이페이지를 불러오는 중입니다.</div> : null}
+      {loading && !page ? <div className="surface-card">내 정보를 불러오는 중입니다.</div> : null}
 
       <div className="account-grid">
         <section className="surface-card">
@@ -186,7 +186,7 @@ export function AccountPage() {
 
         <section className="surface-card">
           <p className="eyebrow">CART SNAPSHOT</p>
-          <h2>마이페이지 장바구니 상품</h2>
+          <h2>장바구니 미리보기</h2>
           <ul className="stack-list">
             {cartItems.map((entry) => (
               <li key={entry.id}>
@@ -196,7 +196,7 @@ export function AccountPage() {
             ))}
           </ul>
           {cartItems.length === 0 ? (
-            <p className="muted-copy">현재 마이페이지에 노출되는 장바구니 상품이 없습니다.</p>
+            <p className="muted-copy">담아둔 상품이 아직 없습니다.</p>
           ) : null}
         </section>
       </div>
@@ -249,15 +249,14 @@ export function AccountPage() {
             <p className="eyebrow">POSTS</p>
             <h2>내 게시물</h2>
             <p className="section-description">
-              작성한 게시글을 카드형으로 나눠서 보고, 커뮤니티 상세 페이지로 바로 이동할 수
-              있게 정리했습니다.
+              내가 남긴 이야기와 반응을 한눈에 확인하고 다시 둘러볼 수 있습니다.
             </p>
           </div>
           <div className="account-post-summary">
             <span className="account-post-badge">총 {posts.length}개</span>
             <p className="field-hint">
               {posts.length > 0
-                ? "최근 작성한 게시물부터 한 장씩 구분해서 볼 수 있습니다."
+                ? "최근에 작성한 글부터 차례로 살펴볼 수 있습니다."
                 : "아직 작성한 게시물이 없습니다."}
             </p>
           </div>

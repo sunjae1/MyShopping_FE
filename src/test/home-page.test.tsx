@@ -120,8 +120,8 @@ describe("HomePage", () => {
       "src",
       "/knit-category.webp"
     );
-    expect(screen.getAllByText("1개 상품이 연결된 카테고리")).toHaveLength(2);
-    expect(screen.getByText("카테고리 필터")).toBeInTheDocument();
+    expect(screen.getAllByText("1개의 상품을 만나보세요")).toHaveLength(2);
+    expect(screen.getByText("무드별로 골라보는 카테고리 라인업")).toBeInTheDocument();
   });
 
   it("filters the catalog by category shortcut selection", async () => {
@@ -134,7 +134,7 @@ describe("HomePage", () => {
     const shortcutButton = await screen.findByRole("button", { name: /Knit/ });
     fireEvent.click(shortcutButton);
 
-    expect(await screen.findByText(/현재 선택된 카테고리:/)).toBeInTheDocument();
+    expect(await screen.findByText(/지금 보고 있는 카테고리:/)).toBeInTheDocument();
     expect(screen.getAllByText("Bravo Knit").length).toBeGreaterThan(0);
     expect(vi.mocked(fetchItems)).toHaveBeenLastCalledWith({
       keyword: "",

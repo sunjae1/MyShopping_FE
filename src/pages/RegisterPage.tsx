@@ -43,11 +43,8 @@ export function RegisterPage() {
     <section className="auth-shell">
       <div className="auth-card">
         <p className="eyebrow">REGISTER</p>
-        <h1>새 계정 만들기</h1>
-        <p>
-          백엔드 `RegisterForm` 규칙에 맞춰 이름, 이메일, 비밀번호를 등록한 뒤
-          바로 로그인합니다.
-        </p>
+        <h1>새 멤버로 시작하기</h1>
+        <p>간단한 정보만 입력하면 바로 가입하고 쇼핑을 시작할 수 있습니다.</p>
 
         <StatusBanner tone="error">{feedback}</StatusBanner>
 

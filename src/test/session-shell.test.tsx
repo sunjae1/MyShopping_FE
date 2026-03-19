@@ -52,11 +52,11 @@ describe("AppShell offline startup", () => {
     expect(screen.getByText("홈 콘텐츠")).toBeInTheDocument();
 
     expect(
-      await screen.findByText("백엔드 서버에 연결하지 못했습니다. 서버 실행 상태를 확인해 주세요.")
+      await screen.findByText("스토어 연결이 잠시 불안정합니다. 잠시 후 다시 시도해 주세요.")
     ).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.queryByText("세션 확인 중")).not.toBeInTheDocument();
+      expect(screen.queryByText("스토어 준비 중")).not.toBeInTheDocument();
     });
     expect(screen.getByText("홈 콘텐츠")).toBeInTheDocument();
   });

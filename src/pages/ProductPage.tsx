@@ -93,7 +93,7 @@ export function ProductPage() {
   }
 
   if (loading) {
-    return <div className="surface-card">상품 정보를 불러오는 중입니다.</div>;
+    return <div className="surface-card">상품을 준비하는 중입니다.</div>;
   }
 
   if (!item) {
@@ -121,8 +121,8 @@ export function ProductPage() {
           <p className="detail-price">{formatCurrency(item.price)}</p>
           <p className="detail-stock">{getItemAvailability(item.quantity)}</p>
           <p className="detail-description">
-            메인에서 바로 이어지는 상품 상세 화면입니다. 가격, 재고, 수량 선택을
-            한 자리에서 확인하고 세션 장바구니 흐름으로 연결합니다.
+            데일리 룩에 자연스럽게 어우러지는 아이템입니다. 원하는 수량을 선택해
+            장바구니에 담고 함께 어울리는 상품도 이어서 둘러보세요.
           </p>
 
           <dl className="detail-stats">
@@ -163,7 +163,7 @@ export function ProductPage() {
         <div className="section-header">
           <div>
             <p className="eyebrow">MORE TO SHOP</p>
-            <h2>다른 상품 더 보기</h2>
+            <h2>함께 보면 좋은 상품</h2>
           </div>
         </div>
         <div className="product-grid">
