@@ -47,10 +47,10 @@ export function LoginPage() {
     <section className="auth-shell">
       <div className="auth-card">
         <p className="eyebrow">LOGIN</p>
-        <h1>세션 기반 로그인</h1>
+        <h1>JWT 쿠키 기반 로그인</h1>
         <p>
-          이 화면은 Spring Security JSON 로그인 엔드포인트인 `/api/login`을 직접
-          호출합니다.
+          이 화면은 `/api/login`으로 로그인하고, Access/Refresh Token은 모두
+          HttpOnly 쿠키로 관리합니다.
         </p>
 
         <StatusBanner tone="error">{bannerMessage}</StatusBanner>

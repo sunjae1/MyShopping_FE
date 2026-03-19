@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "../components/AppShell";
 import { CartProvider } from "../contexts/CartContext";
 import { SessionProvider } from "../contexts/SessionContext";
-import { fetchSession } from "../api/client";
+import { fetchCart, fetchSession } from "../api/client";
 
 vi.mock("../api/client", () => ({
   fetchSession: vi.fn(),
@@ -17,7 +17,21 @@ vi.mock("../api/client", () => ({
   toAppErrorMessage: vi.fn((_error: unknown, fallback: string) => fallback)
 }));
 
+function LocationEcho() {
+  const location = useLocation();
+
+  return <div>{`${location.pathname}${location.search}`}</div>;
+}
+
 describe("AppShell offline startup", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchCart).mockResolvedValue({
+      cartItems: [],
+      allPrice: 0
+    });
+  });
+
   it("keeps the shell visible and surfaces a backend connectivity message", async () => {
     vi.mocked(fetchSession).mockRejectedValue(new TypeError("Failed to fetch"));
 
@@ -45,5 +59,82 @@ describe("AppShell offline startup", () => {
       expect(screen.queryByText("세션 확인 중")).not.toBeInTheDocument();
     });
     expect(screen.getByText("홈 콘텐츠")).toBeInTheDocument();
+  });
+
+  it("clears the user shell and redirects to login when auth is required", async () => {
+    vi.mocked(fetchSession).mockResolvedValue({
+      user: {
+        id: 1,
+        email: "member@example.com",
+        name: "멤버",
+        role: "USER"
+      },
+      items: []
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/account?tab=security"]}>
+        <SessionProvider>
+          <CartProvider>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route path="/account" element={<div>계정 콘텐츠</div>} />
+                <Route path="*" element={<LocationEcho />} />
+              </Route>
+            </Routes>
+          </CartProvider>
+        </SessionProvider>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("멤버 님")).toBeInTheDocument();
+
+    window.dispatchEvent(
+      new CustomEvent("shopping:auth-required", {
+        detail: {
+          message: "로그인이 필요합니다.",
+          reason: "auth",
+          returnTo: "/account?tab=security"
+        }
+      })
+    );
+
+    expect(
+      await screen.findByText("/login?returnTo=%2Faccount%3Ftab%3Dsecurity&reason=auth")
+    ).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByText("멤버 님")).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("link", { name: "로그인" })).toBeInTheDocument();
+  });
+
+  it("shows the product management navigation for admin users", async () => {
+    vi.mocked(fetchSession).mockResolvedValue({
+      user: {
+        id: 99,
+        email: "admin@example.com",
+        name: "관리자",
+        role: "ADMIN"
+      },
+      items: []
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <SessionProvider>
+          <CartProvider>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route index element={<div>홈 콘텐츠</div>} />
+              </Route>
+            </Routes>
+          </CartProvider>
+        </SessionProvider>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("관리자 님")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "상품 관리" })).toBeInTheDocument();
   });
 });

@@ -11,6 +11,22 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ item }: ProductCardProps) {
+  const state =
+    item.quantity <= 0
+      ? {
+          label: "SOLD OUT",
+          tone: "soldout"
+        }
+      : item.quantity < 5
+        ? {
+            label: "LOW STOCK",
+            tone: "limited"
+          }
+        : {
+            label: "OPEN",
+            tone: "live"
+          };
+
   return (
     <article className="product-card">
       <Link className="product-card-link" to={`/products/${item.id}`}>
@@ -22,15 +38,18 @@ export function ProductCard({ item }: ProductCardProps) {
           />
         </div>
         <div className="product-card-copy">
-          <p className="product-card-id">DROP #{item.id}</p>
+          <div className="product-card-topline">
+            <span className={`product-state product-state-${state.tone}`}>{state.label}</span>
+            <span className="product-card-id">ITEM #{item.id}</span>
+          </div>
           <h3>{item.itemName}</h3>
-          <p className="product-card-price">{formatCurrency(item.price)}</p>
           <p className="product-card-stock">{getItemAvailability(item.quantity)}</p>
+          <p className="product-card-price">{formatCurrency(item.price)}</p>
         </div>
       </Link>
       <Link
         to={`/products/${item.id}`}
-        className="secondary-button link-button"
+        className="secondary-button link-button product-card-cta"
       >
         {item.quantity > 0 ? "장바구니 담기" : "품절"}
       </Link>

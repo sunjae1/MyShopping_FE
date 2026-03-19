@@ -121,8 +121,8 @@ export function ProductPage() {
           <p className="detail-price">{formatCurrency(item.price)}</p>
           <p className="detail-stock">{getItemAvailability(item.quantity)}</p>
           <p className="detail-description">
-            기존 SSR 템플릿의 상품 페이지를 React 경험으로 재해석했습니다. 실제
-            데이터는 `GET /api/items/{item.id}`에서 가져옵니다.
+            메인에서 바로 이어지는 상품 상세 화면입니다. 가격, 재고, 수량 선택을
+            한 자리에서 확인하고 세션 장바구니 흐름으로 연결합니다.
           </p>
 
           <dl className="detail-stats">
@@ -133,6 +133,10 @@ export function ProductPage() {
             <div>
               <dt>재고</dt>
               <dd>{formatNumber(item.quantity)}점</dd>
+            </div>
+            <div>
+              <dt>상태</dt>
+              <dd>{item.quantity > 0 ? "판매중" : "품절"}</dd>
             </div>
           </dl>
 
@@ -158,7 +162,7 @@ export function ProductPage() {
       <section className="section-block">
         <div className="section-header">
           <div>
-            <p className="eyebrow">YOU MAY ALSO LIKE</p>
+            <p className="eyebrow">MORE TO SHOP</p>
             <h2>다른 상품 더 보기</h2>
           </div>
         </div>

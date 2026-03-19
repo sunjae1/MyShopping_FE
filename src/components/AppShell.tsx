@@ -52,27 +52,50 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <header className="site-header">
-        <div className="header-inner">
+        <div className="site-utility-bar">
+          <div className="utility-inner">
+            <div className="utility-copy">
+              <span>SELECT COMMERCE</span>
+              <span>프로모션, 랭킹, 카탈로그를 한 화면에서 빠르게 탐색</span>
+            </div>
+            <div className="utility-session">
+              {loading ? (
+                <span>세션 확인 중</span>
+              ) : user ? (
+                <span>{user.name} 님, 회원 전용 장바구니를 사용할 수 있습니다.</span>
+              ) : (
+                <span>장바구니와 마이페이지는 로그인 후 이용할 수 있습니다.</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="header-inner header-main">
           <Link to="/" className="brand-lockup">
-            <img src="/brand-mark.svg" alt="Atelier Seoul" />
+            <img src="/brand-mark.svg" alt="Seoul Select Mall" />
             <div>
-              <span className="brand-kicker">CURATED STORE</span>
-              <strong>Atelier Seoul</strong>
+              <span className="brand-kicker">CURATED STOREFRONT</span>
+              <strong>Seoul Select Mall</strong>
             </div>
           </Link>
 
           <nav className="site-nav">
             <NavLink to="/" end className={linkClassName}>
-              Shop
+              홈
             </NavLink>
             <NavLink to="/community" className={linkClassName}>
-              Community
+              커뮤니티
             </NavLink>
+            {user?.role === "ADMIN" ? (
+              <NavLink to="/admin/items" className={linkClassName}>
+                상품 관리
+              </NavLink>
+            ) : null}
             <NavLink to="/account" className={linkClassName}>
-              My Atelier
+              마이페이지
             </NavLink>
             <NavLink to="/cart" className={linkClassName}>
-              Cart
+              장바구니
               {cartCount > 0 ? <span className="cart-badge">{cartCount}</span> : null}
             </NavLink>
           </nav>
@@ -108,13 +131,10 @@ export function AppShell() {
 
       <footer className="site-footer">
         <div>
-          <p className="eyebrow">FRONTEND LAB</p>
-          <strong>Atelier Seoul React Frontend</strong>
+          <p className="eyebrow">CSR STOREFRONT</p>
+          <strong>Seoul Select Mall</strong>
         </div>
-        <p>
-          Spring Boot API와 세션 기반 인증을 연결하는 독립형 React 쇼핑몰
-          프런트입니다.
-        </p>
+        <p>Spring Boot API와 JWT HttpOnly 쿠키 인증을 연결한 React 쇼핑몰 프런트입니다.</p>
       </footer>
     </div>
   );

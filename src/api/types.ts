@@ -1,7 +1,10 @@
+export type UserRole = "USER" | "ADMIN";
+
 export interface User {
   id: number;
   email: string;
   name: string;
+  role: UserRole;
 }
 
 export interface Item {
@@ -9,12 +12,24 @@ export interface Item {
   itemName: string;
   price: number;
   quantity: number;
+  categoryId?: number | null;
+  categoryName?: string | null;
   imageUrl?: string | null;
 }
 
 export interface Category {
   id: number;
   name: string;
+  representativeImageUrl?: string | null;
+  itemCount?: number;
+}
+
+export interface ItemMutationInput {
+  itemName: string;
+  price: number;
+  quantity: number;
+  categoryId: number;
+  imageFile?: File | null;
 }
 
 export interface CartItem {
@@ -66,6 +81,11 @@ export interface MyPage {
 export interface RawUserResponse {
   userDto: User;
   itemDto: Item[];
+}
+
+export interface LoginResponse {
+  accessTokenExpiresInSeconds: number;
+  user: User;
 }
 
 export interface SessionPayload {

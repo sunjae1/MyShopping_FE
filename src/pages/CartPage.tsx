@@ -44,7 +44,7 @@ export function CartPage() {
         <EmptyState
           eyebrow="AUTH REQUIRED"
           title="장바구니는 로그인 후 사용할 수 있습니다."
-          description="현재 백엔드는 세션 기반 인증으로 장바구니와 주문을 보호합니다."
+          description="현재 백엔드는 JWT HttpOnly 쿠키 인증으로 장바구니와 주문을 보호합니다."
         />
         <div className="inline-actions">
           <Link to="/login" className="primary-button link-button">

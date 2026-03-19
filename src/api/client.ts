@@ -4,6 +4,8 @@ import type {
   Category,
   Comment,
   Item,
+  ItemMutationInput,
+  LoginResponse,
   MyPage,
   Order,
   Post,
@@ -14,12 +16,19 @@ import type {
 } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+const REFRESH_PATH = "/api/auth/refresh";
+const LOGOUT_PATH = "/api/auth/logout";
 type AuthPolicy = "default" | "protected";
 
 interface RequestOptions {
   authPolicy?: AuthPolicy;
   authMessage?: string;
+  hasRetriedAfterRefresh?: boolean;
+  skipAuthRefresh?: boolean;
 }
+
+let refreshLock: Promise<void> | null = null;
+let authRequiredDispatchScheduled = false;
 
 export class ApiError extends Error {
   status: number;
@@ -35,6 +44,19 @@ export class ApiError extends Error {
 
 function buildUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
+}
+
+function isRefreshCandidate(path: string, options: RequestOptions): boolean {
+  if (options.skipAuthRefresh || options.hasRetriedAfterRefresh) {
+    return false;
+  }
+
+  return (
+    path !== "/api/login" &&
+    path !== "/api/register" &&
+    path !== REFRESH_PATH &&
+    path !== LOGOUT_PATH
+  );
 }
 
 function toMessage(payload: unknown, fallback: string): string {
@@ -78,18 +100,77 @@ async function parseResponseBody(response: Response): Promise<unknown> {
   return text;
 }
 
+async function fetchWithCredentials(
+  path: string,
+  init: RequestInit
+): Promise<Response> {
+  return fetch(buildUrl(path), {
+    credentials: "include",
+    ...init
+  });
+}
+
+function scheduleAuthRequiredDispatch(message: string): void {
+  if (authRequiredDispatchScheduled) {
+    return;
+  }
+
+  authRequiredDispatchScheduled = true;
+
+  dispatchAuthRequired({
+    message
+  });
+
+  queueMicrotask(() => {
+    authRequiredDispatchScheduled = false;
+  });
+}
+
+async function refreshAccessToken(): Promise<void> {
+  if (!refreshLock) {
+    refreshLock = (async () => {
+      const response = await fetchWithCredentials(REFRESH_PATH, {
+        method: "POST"
+      });
+      const payload = await parseResponseBody(response);
+
+      if (!response.ok) {
+        throw new ApiError(
+          response.status,
+          toMessage(payload, `인증 갱신에 실패했습니다. (${response.status})`),
+          payload
+        );
+      }
+    })().finally(() => {
+      refreshLock = null;
+    });
+  }
+
+  return refreshLock;
+}
+
 async function request<T>(
   path: string,
   init: RequestInit = {},
   options: RequestOptions = {}
 ): Promise<T> {
-  const response = await fetch(buildUrl(path), {
-    credentials: "include",
-    ...init
-  });
+  const response = await fetchWithCredentials(path, init);
   const payload = await parseResponseBody(response);
 
   if (!response.ok) {
+    if (response.status === 401 && isRefreshCandidate(path, options)) {
+      try {
+        await refreshAccessToken();
+
+        return request<T>(path, init, {
+          ...options,
+          hasRetriedAfterRefresh: true
+        });
+      } catch {
+        // Fall through and handle the original unauthorized response below.
+      }
+    }
+
     const error = new ApiError(
       response.status,
       toMessage(payload, `요청에 실패했습니다. (${response.status})`),
@@ -97,15 +178,50 @@ async function request<T>(
     );
 
     if (response.status === 401 && options.authPolicy === "protected") {
-      dispatchAuthRequired({
-        message: options.authMessage ?? "로그인이 필요합니다."
-      });
+      scheduleAuthRequiredDispatch(options.authMessage ?? "로그인이 필요합니다.");
     }
 
     throw error;
   }
 
   return payload as T;
+}
+
+function buildItemQuery(filters?: {
+  keyword?: string;
+  categoryId?: number | null;
+}): string {
+  if (!filters) {
+    return "/api/items";
+  }
+
+  const searchParams = new URLSearchParams();
+
+  if (filters.keyword?.trim()) {
+    searchParams.set("keyword", filters.keyword.trim());
+  }
+
+  if (typeof filters.categoryId === "number") {
+    searchParams.set("categoryId", String(filters.categoryId));
+  }
+
+  const queryString = searchParams.toString();
+
+  return queryString ? `/api/items?${queryString}` : "/api/items";
+}
+
+function toItemFormData(input: ItemMutationInput): FormData {
+  const formData = new FormData();
+  formData.set("itemName", input.itemName);
+  formData.set("price", String(input.price));
+  formData.set("quantity", String(input.quantity));
+  formData.set("categoryId", String(input.categoryId));
+
+  if (input.imageFile) {
+    formData.set("imageFile", input.imageFile);
+  }
+
+  return formData;
 }
 
 function normalizeCart(cart: Partial<Cart> | null | undefined): Cart {
@@ -175,16 +291,24 @@ export async function fetchSession(): Promise<SessionPayload> {
 }
 
 export async function login(email: string, password: string): Promise<User> {
-  return request<User>("/api/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
+  const response = await request<LoginResponse>(
+    "/api/login",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
     },
-    body: JSON.stringify({
-      email,
-      password
-    })
-  });
+    {
+      skipAuthRefresh: true
+    }
+  );
+
+  return response.user;
 }
 
 export async function register(input: {
@@ -202,13 +326,22 @@ export async function register(input: {
 }
 
 export async function logout(): Promise<void> {
-  await request("/api/logout", {
-    method: "POST"
-  });
+  await request(
+    LOGOUT_PATH,
+    {
+      method: "POST"
+    },
+    {
+      skipAuthRefresh: true
+    }
+  );
 }
 
-export async function fetchItems(): Promise<Item[]> {
-  return request<Item[]>("/api/items");
+export async function fetchItems(filters?: {
+  keyword?: string;
+  categoryId?: number | null;
+}): Promise<Item[]> {
+  return request<Item[]>(buildItemQuery(filters));
 }
 
 export async function fetchItem(itemId: number): Promise<Item> {
@@ -217,6 +350,44 @@ export async function fetchItem(itemId: number): Promise<Item> {
 
 export async function fetchCategories(): Promise<Category[]> {
   return request<Category[]>("/api/categories");
+}
+
+export async function createItem(input: ItemMutationInput): Promise<Item> {
+  return request<Item>(
+    "/api/items",
+    {
+      method: "POST",
+      body: toItemFormData(input)
+    },
+    {
+      authPolicy: "protected"
+    }
+  );
+}
+
+export async function updateItem(itemId: number, input: ItemMutationInput): Promise<Item> {
+  return request<Item>(
+    `/api/items/${itemId}`,
+    {
+      method: "PUT",
+      body: toItemFormData(input)
+    },
+    {
+      authPolicy: "protected"
+    }
+  );
+}
+
+export async function deleteItem(itemId: number): Promise<void> {
+  await request(
+    `/api/items/${itemId}`,
+    {
+      method: "DELETE"
+    },
+    {
+      authPolicy: "protected"
+    }
+  );
 }
 
 export async function fetchCart(): Promise<Cart> {
@@ -436,4 +607,9 @@ export async function deleteComment(postId: number, commentId: number): Promise<
       authPolicy: "protected"
     }
   );
+}
+
+export function resetAuthClientStateForTests(): void {
+  refreshLock = null;
+  authRequiredDispatchScheduled = false;
 }
