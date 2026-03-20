@@ -356,6 +356,30 @@ function toMessage(payload: unknown, fallback: string): string {
   return fallback;
 }
 
+function sanitizeBackendErrorMessage(message: string, fallback: string): string {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("data truncation") ||
+    normalized.includes("too long for column") ||
+    normalized.includes("value too long")
+  ) {
+    return "입력한 내용이 너무 깁니다. 내용을 조금 줄여 다시 시도해 주세요.";
+  }
+
+  if (
+    normalized.includes("could not execute statement") ||
+    normalized.includes("insert into ") ||
+    normalized.includes("update ") ||
+    normalized.includes("delete from ") ||
+    normalized.includes("sql [")
+  ) {
+    return fallback;
+  }
+
+  return message;
+}
+
 async function parseResponseBody(response: Response): Promise<unknown> {
   const text = await response.text();
 
@@ -542,11 +566,11 @@ export function toAppErrorMessage(
       return "로그인 후 이용해 주세요.";
     }
 
-    return error.message;
+    return sanitizeBackendErrorMessage(error.message, fallback);
   }
 
   if (error instanceof Error && error.message) {
-    return error.message;
+    return sanitizeBackendErrorMessage(error.message, fallback);
   }
 
   return fallback;

@@ -49,6 +49,9 @@ test.describe("community flows", () => {
     await expect(page.getByText("댓글을 삭제했습니다.")).toBeVisible();
 
     await page.getByRole("button", { name: "삭제하기" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByText("게시글을 삭제할까요?")).toBeVisible();
+    await page.getByRole("button", { name: "게시글 삭제" }).click();
     await expect(page).toHaveURL(/\/community$/);
     await expect(page.getByText("E2E 게시글 수정")).toHaveCount(0);
   });

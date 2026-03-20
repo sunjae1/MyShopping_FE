@@ -1,13 +1,15 @@
 import { waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  ApiError,
   checkout,
   fetchCart,
   fetchItems,
   fetchMyPage,
   fetchSession,
   login,
-  resetAuthClientStateForTests
+  resetAuthClientStateForTests,
+  toAppErrorMessage
 } from "../api/client";
 import { subscribeAuthRequired, type AuthRequiredDetail } from "../lib/auth";
 
@@ -328,5 +330,16 @@ describe("api client auth flow", () => {
     fetchMock.mockResolvedValueOnce(emptyResponse(200));
 
     await expect(fetchItems()).rejects.toThrow("상품 목록 응답 형식이 올바르지 않습니다.");
+  });
+
+  it("sanitizes raw backend SQL errors into a friendly message", () => {
+    const error = new ApiError(
+      500,
+      "could not execute statement [Data truncation: Data too long for column 'content' at row 1] [insert into post (author,content,created_date,title,user_id) values (?,?,?,?,?)]"
+    );
+
+    expect(toAppErrorMessage(error, "게시글 등록에 실패했습니다.")).toBe(
+      "입력한 내용이 너무 깁니다. 내용을 조금 줄여 다시 시도해 주세요."
+    );
   });
 });

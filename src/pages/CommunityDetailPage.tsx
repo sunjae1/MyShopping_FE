@@ -21,6 +21,7 @@ export function CommunityDetailPage() {
   const params = useParams();
   const { user } = useSession();
   const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState("");
   const [editingPost, setEditingPost] = useState(false);
@@ -30,6 +31,8 @@ export function CommunityDetailPage() {
   });
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [pendingDeletePost, setPendingDeletePost] = useState<Post | null>(null);
+  const [deletingPost, setDeletingPost] = useState(false);
   const [pendingDeleteComment, setPendingDeleteComment] = useState<Comment | null>(null);
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
 
@@ -37,6 +40,8 @@ export function CommunityDetailPage() {
     const postId = Number(params.postId);
 
     if (!postId) {
+      setPost(null);
+      setLoading(false);
       setFeedback("잘못된 게시글 경로입니다.");
       return;
     }
@@ -44,6 +49,12 @@ export function CommunityDetailPage() {
     let cancelled = false;
 
     async function load() {
+      if (!cancelled) {
+        setLoading(true);
+        setPost(null);
+        setFeedback(null);
+      }
+
       try {
         const nextPost = await fetchPost(postId);
 
@@ -52,13 +63,19 @@ export function CommunityDetailPage() {
         }
 
         setPost(nextPost);
+        setFeedback(null);
         setPostDraft({
           title: nextPost.title,
           content: nextPost.content
         });
       } catch (error) {
         if (!cancelled) {
+          setPost(null);
           setFeedback(toAppErrorMessage(error, "게시글을 불러오지 못했습니다."));
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
         }
       }
     }
@@ -74,8 +91,15 @@ export function CommunityDetailPage() {
   const canEditPost = Boolean(user && post && user.name === post.author);
 
   async function reloadPost() {
-    const nextPost = await fetchPost(postId);
-    setPost(nextPost);
+    setLoading(true);
+    setFeedback(null);
+
+    try {
+      const nextPost = await fetchPost(postId);
+      setPost(nextPost);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCreateComment(event: FormEvent<HTMLFormElement>) {
@@ -120,6 +144,8 @@ export function CommunityDetailPage() {
   }
 
   async function handleDeletePost() {
+    setDeletingPost(true);
+
     try {
       await deletePost(postId);
       navigate("/community");
@@ -129,6 +155,8 @@ export function CommunityDetailPage() {
       }
 
       setFeedback(toAppErrorMessage(error, "게시글 삭제에 실패했습니다."));
+    } finally {
+      setDeletingPost(false);
     }
   }
 
@@ -199,6 +227,10 @@ export function CommunityDetailPage() {
     }
   }
 
+  if (loading) {
+    return <div className="surface-card">게시글을 불러오는 중입니다.</div>;
+  }
+
   if (!post) {
     return (
       <div className="page-stack">
@@ -212,6 +244,34 @@ export function CommunityDetailPage() {
 
   return (
     <div className="page-stack">
+      <ConfirmModal
+        open={pendingDeletePost !== null}
+        title="게시글을 삭제할까요?"
+        description={
+          pendingDeletePost
+            ? `"${pendingDeletePost.title}" 글을 삭제하면 되돌릴 수 없습니다.`
+            : ""
+        }
+        confirmLabel="게시글 삭제"
+        tone="danger"
+        busy={deletingPost}
+        onCancel={() => {
+          if (deletingPost) {
+            return;
+          }
+          setPendingDeletePost(null);
+        }}
+        onConfirm={() => {
+          if (!pendingDeletePost) {
+            return;
+          }
+
+          void handleDeletePost().finally(() => {
+            setPendingDeletePost(null);
+          });
+        }}
+      />
+
       <ConfirmModal
         open={pendingDeleteComment !== null}
         title="댓글을 삭제할까요?"
@@ -318,9 +378,10 @@ export function CommunityDetailPage() {
                 <button
                   type="button"
                   className="ghost-button"
-                  onClick={() => void handleDeletePost()}
+                  disabled={deletingPost}
+                  onClick={() => setPendingDeletePost(post)}
                 >
-                  삭제하기
+                  {deletingPost ? "삭제 중..." : "삭제하기"}
                 </button>
               </div>
             ) : null}

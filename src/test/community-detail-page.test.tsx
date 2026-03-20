@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CommunityDetailPage } from "../pages/CommunityDetailPage";
@@ -111,5 +112,32 @@ describe("CommunityDetailPage", () => {
       expect(deleteComment).toHaveBeenCalledWith(1, 11);
     });
     expect(await screen.findByText("댓글을 삭제했습니다.")).toBeInTheDocument();
+  });
+
+  it("opens a warning modal before deleting a post", async () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={["/community/1"]}>
+        <Routes>
+          <Route path="/community/:postId" element={<CommunityDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("테스트 게시글")).toBeInTheDocument();
+    const postDetailCard = container.querySelector(".post-detail-card");
+    expect(postDetailCard).not.toBeNull();
+
+    fireEvent.click(within(postDetailCard as HTMLElement).getByRole("button", { name: "삭제하기" }));
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("게시글을 삭제할까요?")).toBeInTheDocument();
+    expect(screen.getByText(/"테스트 게시글" 글을 삭제하면 되돌릴 수 없습니다\./)).toBeInTheDocument();
+    expect(deletePost).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "게시글 삭제" }));
+
+    await waitFor(() => {
+      expect(deletePost).toHaveBeenCalledWith(1);
+    });
   });
 });
