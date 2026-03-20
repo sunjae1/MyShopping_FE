@@ -9,7 +9,9 @@ test.describe("admin item management", () => {
 
     await page.goto("/admin/items");
 
-    await expect(page.getByText("관리자 권한이 필요한 페이지입니다.")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "운영자 전용 페이지입니다." })
+    ).toBeVisible();
   });
 
   test("allows an admin to create, filter, update, and delete items", async ({ page }) => {
@@ -54,10 +56,8 @@ test.describe("admin item management", () => {
     await page.getByLabel("카테고리").first().selectOption("2");
     await expect(page.getByText("현재 1개 상품 노출")).toBeVisible();
 
-    page.once("dialog", (dialog) => {
-      dialog.accept();
-    });
     await page.getByRole("button", { name: "삭제" }).first().click();
+    await page.getByRole("button", { name: "상품 삭제" }).click();
 
     await expect(page.getByText(/상품 #\d+를 삭제했습니다\./)).toBeVisible();
     await expect(page.getByText("Delta Jacket Pro")).toHaveCount(0);

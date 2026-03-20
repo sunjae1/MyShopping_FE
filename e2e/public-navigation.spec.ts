@@ -11,18 +11,18 @@ test.describe("public storefront routes", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: "프로모션, 랭킹, 카탈로그가 한 화면에서 바로 보이는 쇼핑몰 메인"
+        name: "지금 가장 마음에 드는 셀렉션을 만나보세요"
       })
     ).toBeVisible();
     await expect(page.getByRole("heading", { level: 2, name: "Alpha Coat" })).toBeVisible();
 
     await page.getByRole("button", { name: /Knit/ }).click();
-    await expect(page.getByText("현재 선택된 카테고리:")).toBeVisible();
-    await expect(page.getByText("현재 1개 상품 노출")).toBeVisible();
+    await expect(page.getByText("지금 보고 있는 카테고리: Knit")).toBeVisible();
+    await expect(page.getByText("총 1개 상품")).toBeVisible();
 
     await page.getByPlaceholder("상품 이름으로 검색").fill("Bravo");
     await expect(page.getByRole("heading", { level: 3, name: "Bravo Knit" })).toBeVisible();
-    await expect(page.getByText("현재 1개 상품 노출")).toBeVisible();
+    await expect(page.getByText("총 1개 상품")).toBeVisible();
 
     await page.getByRole("link", { name: "Bravo Knit" }).first().click();
     await expect(page).toHaveURL(/\/products\/2$/);
@@ -35,13 +35,15 @@ test.describe("public storefront routes", () => {
 
     await page.goto("/community");
 
-    await expect(page.getByRole("heading", { name: "쇼핑몰 게시판" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "스타일 커뮤니티" })).toBeVisible();
     await expect(page.getByRole("link", { name: /봄 신상 후기/ })).toBeVisible();
-    await expect(page.getByText("게시글 작성은 로그인 후 가능합니다.")).toBeVisible();
+    await expect(
+      page.getByText("로그인 후 스타일 팁이나 쇼핑 후기를 남길 수 있습니다.")
+    ).toBeVisible();
 
     await page.goto("/missing-route");
     await expect(
-      page.getByRole("heading", { name: "요청하신 페이지를 찾을 수 없습니다." })
+      page.getByRole("heading", { name: "찾으시는 페이지가 보이지 않습니다." })
     ).toBeVisible();
   });
 });

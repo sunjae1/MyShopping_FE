@@ -49,6 +49,6 @@ test.describe("refresh lock transport", () => {
     await page.goto("/account");
 
     await expect(page).toHaveURL(/\/login\?returnTo=%2Faccount&reason=auth$/);
-    await expect(page.getByRole("heading", { name: "JWT 쿠키 기반 로그인" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "다시 만나 반가워요" })).toBeVisible();
   });
 });

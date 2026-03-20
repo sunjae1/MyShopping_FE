@@ -8,3 +8,7 @@ vite.config.d.ts
 .env.development
 .env.production
 
+# Playwright artifacts
+test-results/
+playwright-report/
+blob-report/

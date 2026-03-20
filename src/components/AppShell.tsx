@@ -16,6 +16,8 @@ export function AppShell() {
   const { cart } = useCart();
   const { user, loading, logout, clearSession, sessionError } = useSession();
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const cartCount = cart.cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const currentPath = `${location.pathname}${location.search}${location.hash}`;
 
@@ -36,8 +38,81 @@ export function AppShell() {
     });
   }, [clearSession, currentPath, location.pathname, navigate]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const syncViewport = (matches: boolean) => {
+      setIsMobileViewport(matches);
+
+      if (!matches) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    syncViewport(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      syncViewport(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange);
+
+      return () => {
+        mediaQuery.removeEventListener("change", handleChange);
+      };
+    }
+
+    mediaQuery.addListener(handleChange);
+
+    return () => {
+      mediaQuery.removeListener(handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.hash, location.pathname, location.search]);
+
+  useEffect(() => {
+    document.body.classList.toggle(
+      "mobile-nav-open",
+      isMobileViewport && isMobileMenuOpen
+    );
+
+    return () => {
+      document.body.classList.remove("mobile-nav-open");
+    };
+  }, [isMobileMenuOpen, isMobileViewport]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileMenuOpen]);
+
+  function closeMobileMenu() {
+    setIsMobileMenuOpen(false);
+  }
+
   async function handleLogout() {
     setLogoutError(null);
+    closeMobileMenu();
 
     try {
       await logout();
@@ -48,6 +123,77 @@ export function AppShell() {
       );
     }
   }
+
+  const navigationContent = (
+    <>
+      <nav className="site-nav" aria-label="주요 메뉴">
+        <NavLink to="/" end className={linkClassName} onClick={closeMobileMenu}>
+          홈
+        </NavLink>
+        <NavLink to="/community" className={linkClassName} onClick={closeMobileMenu}>
+          커뮤니티
+        </NavLink>
+        {user?.role === "ADMIN" ? (
+          <>
+            <NavLink
+              to="/admin/items"
+              className={linkClassName}
+              onClick={closeMobileMenu}
+            >
+              상품 관리
+            </NavLink>
+            <NavLink
+              to="/admin/categories"
+              className={linkClassName}
+              onClick={closeMobileMenu}
+            >
+              카테고리 관리
+            </NavLink>
+          </>
+        ) : null}
+        <NavLink to="/account" className={linkClassName} onClick={closeMobileMenu}>
+          마이페이지
+        </NavLink>
+        <NavLink to="/cart" className={linkClassName} onClick={closeMobileMenu}>
+          장바구니
+          {cartCount > 0 ? <span className="cart-badge">{cartCount}</span> : null}
+        </NavLink>
+      </nav>
+
+      <div className="header-actions">
+        {loading ? <span className="session-chip">스토어 준비 중</span> : null}
+        {user ? (
+          <>
+            <span className="session-chip">{user.name} 님</span>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={() => void handleLogout()}
+            >
+              로그아웃
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              className="ghost-button link-button"
+              onClick={closeMobileMenu}
+            >
+              로그인
+            </Link>
+            <Link
+              to="/register"
+              className="primary-button link-button"
+              onClick={closeMobileMenu}
+            >
+              회원가입
+            </Link>
+          </>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div className="app-shell">
@@ -71,7 +217,7 @@ export function AppShell() {
         </div>
 
         <div className="header-inner header-main">
-          <Link to="/" className="brand-lockup">
+          <Link to="/" className="brand-lockup" onClick={closeMobileMenu}>
             <img src="/brand-mark.svg" alt="Seoul Select Mall" />
             <div>
               <span className="brand-kicker">CURATED STOREFRONT</span>
@@ -79,54 +225,67 @@ export function AppShell() {
             </div>
           </Link>
 
-          <nav className="site-nav">
-            <NavLink to="/" end className={linkClassName}>
-              홈
-            </NavLink>
-            <NavLink to="/community" className={linkClassName}>
-              커뮤니티
-            </NavLink>
-            {user?.role === "ADMIN" ? (
-              <>
-                <NavLink to="/admin/items" className={linkClassName}>
-                  상품 관리
-                </NavLink>
-                <NavLink to="/admin/categories" className={linkClassName}>
-                  카테고리 관리
-                </NavLink>
-              </>
-            ) : null}
-            <NavLink to="/account" className={linkClassName}>
-              마이페이지
-            </NavLink>
-            <NavLink to="/cart" className={linkClassName}>
-              장바구니
-              {cartCount > 0 ? <span className="cart-badge">{cartCount}</span> : null}
-            </NavLink>
-          </nav>
+          {isMobileViewport ? (
+            <button
+              type="button"
+              className={`nav-toggle ${isMobileMenuOpen ? "nav-toggle-active" : ""}`}
+              aria-controls="site-navigation-panel"
+              aria-expanded={isMobileMenuOpen}
+              aria-label={isMobileMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
+              onClick={() => setIsMobileMenuOpen((currentValue) => !currentValue)}
+            >
+              <span className="nav-toggle-line" />
+              <span className="nav-toggle-line" />
+              <span className="nav-toggle-line" />
+            </button>
+          ) : null}
 
-          <div className="header-actions">
-            {loading ? <span className="session-chip">스토어 준비 중</span> : null}
-            {user ? (
-              <>
-                <span className="session-chip">{user.name} 님</span>
-                <button type="button" className="ghost-button" onClick={() => void handleLogout()}>
-                  로그아웃
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="ghost-button link-button">
-                  로그인
-                </Link>
-                <Link to="/register" className="primary-button link-button">
-                  회원가입
-                </Link>
-              </>
-            )}
-          </div>
+          {!isMobileViewport ? (
+            <div id="site-navigation-panel" className="header-panel">
+              {navigationContent}
+            </div>
+          ) : null}
         </div>
       </header>
+
+      {isMobileViewport ? (
+        <>
+          <div
+            id="site-navigation-panel"
+            className={`header-panel ${isMobileMenuOpen ? "header-panel-open" : ""}`}
+            aria-hidden={!isMobileMenuOpen}
+          >
+            <div className="header-panel-head">
+              <div className="header-panel-copy">
+                <span className="brand-kicker">모바일 메뉴</span>
+                <strong>Seoul Select Navigation</strong>
+              </div>
+              <button
+                type="button"
+                className="header-panel-close"
+                onClick={closeMobileMenu}
+              >
+                닫기
+              </button>
+            </div>
+
+            {navigationContent}
+          </div>
+
+          <button
+            type="button"
+            className={`mobile-nav-overlay ${
+              isMobileMenuOpen ? "mobile-nav-overlay-visible" : ""
+            }`}
+            aria-label="메뉴 배경 닫기"
+            aria-hidden={!isMobileMenuOpen}
+            tabIndex={isMobileMenuOpen ? 0 : -1}
+            onClick={closeMobileMenu}
+          >
+            메뉴 배경 닫기
+          </button>
+        </>
+      ) : null}
 
       <main className="page-frame">
         <StatusBanner tone="error">{sessionError}</StatusBanner>

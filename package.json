@@ -9,8 +9,10 @@
     "preview": "vite preview",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:headed": "playwright test --project=chromium --headed",
+    "test:e2e:visual": "playwright test e2e/visual-regression.spec.ts",
+    "test:e2e:visual:update": "playwright test e2e/visual-regression.spec.ts --update-snapshots"
   },
   "dependencies": {
     "react": "^18.3.1",

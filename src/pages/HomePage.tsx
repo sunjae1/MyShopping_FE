@@ -246,20 +246,23 @@ export function HomePage() {
     <div className="page-stack home-page">
       <section className="home-hero">
         <div className="hero-copy">
-          <p className="eyebrow">SPRING STOREFRONT 2026</p>
-          <h1>지금 가장 마음에 드는 셀렉션을 만나보세요</h1>
-          <p className="hero-description">
-            매일 입기 좋은 기본 아이템부터 포인트 룩까지, 취향에 맞는 상품을 가볍게
-            둘러보고 바로 쇼핑해 보세요.
-          </p>
-          <div className="hero-actions">
-            <a href="#catalog" className="primary-button link-button">
-              지금 쇼핑하기
-            </a>
-            <Link to="/community" className="ghost-button link-button">
-              스타일 피드 보기
-            </Link>
+          <div className="hero-copy-main">
+            <p className="eyebrow">SPRING STOREFRONT 2026</p>
+            <h1>지금 가장<br></br> 마음에 드는<br></br> 셀렉션을 만나보세요</h1>
+            <p className="hero-description">
+              매일 입기 좋은 기본 아이템부터 포인트 룩까지, 취향에 맞는 상품을 가볍게
+              둘러보고 바로 쇼핑해 보세요.
+            </p>
+            <div className="hero-actions">
+              <a href="#catalog" className="primary-button link-button">
+                지금 쇼핑하기
+              </a>
+              <Link to="/community" className="ghost-button link-button">
+                스타일 피드 보기
+              </Link>
+            </div>
           </div>
+
           <dl className="hero-metrics">
             <div>
               <dt>전체 상품</dt>
