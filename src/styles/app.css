@@ -863,6 +863,12 @@ textarea {
   color: white;
 }
 
+.comment-section-card {
+  display: grid;
+  gap: 1.35rem;
+  padding: 1.75rem;
+}
+
 .community-card p,
 .community-list-item p {
   margin: 0;
@@ -1252,13 +1258,61 @@ textarea {
   align-items: start;
 }
 
+.community-detail-header {
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.2rem 0 0.35rem;
+}
+
+.community-detail-title {
+  display: grid;
+  gap: 0.55rem;
+}
+
 .post-detail-card {
-  gap: 1rem;
+  display: grid;
+  gap: 1.3rem;
+  padding: 1.75rem;
 }
 
 .post-body {
   font-size: 1.04rem;
   white-space: pre-wrap;
+}
+
+.post-detail-card .community-meta,
+.detail-comment-card .community-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.post-detail-card .post-body,
+.detail-comment-card p {
+  margin: 0;
+  line-height: 1.8;
+}
+
+.post-detail-card .post-body {
+  font-size: 1.08rem;
+}
+
+.comment-section-header {
+  align-items: start;
+}
+
+.comment-section-card .comment-list {
+  gap: 1.1rem;
+}
+
+.detail-comment-card {
+  gap: 0.85rem;
+  padding: 1.3rem 1.35rem;
+}
+
+.comment-compose-form {
+  gap: 1rem;
 }
 
 .empty-state {
@@ -1509,6 +1563,22 @@ textarea {
   .comment-card {
     padding: 1.15rem;
     border-radius: 22px;
+  }
+
+  .community-detail-header {
+    gap: 1rem;
+    padding-bottom: 0.2rem;
+  }
+
+  .post-detail-card,
+  .comment-section-card {
+    gap: 1.05rem;
+    padding: 1.35rem;
+  }
+
+  .detail-comment-card {
+    gap: 0.75rem;
+    padding: 1.1rem 1.15rem;
   }
 
   .shortcut-card-media {

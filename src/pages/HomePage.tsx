@@ -17,6 +17,30 @@ import {
   resolveImageUrl
 } from "../lib/format";
 
+function getDailySeedValue(date: Date): number {
+  const dateKey = [
+    String(date.getFullYear()),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("");
+
+  return dateKey.split("").reduce((total, digit, index) => {
+    return total + Number(digit) * (index + 1);
+  }, 0);
+}
+
+function getDailyHeroItem(items: Item[]): Item | null {
+  if (items.length === 0) {
+    return null;
+  }
+
+  const candidateItems = items.filter((entry) => entry.quantity > 0);
+  const sourceItems = candidateItems.length > 0 ? candidateItems : items;
+  const heroIndex = getDailySeedValue(new Date()) % sourceItems.length;
+
+  return sourceItems[heroIndex] ?? sourceItems[0] ?? null;
+}
+
 export function HomePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [visibleItems, setVisibleItems] = useState<Item[]>([]);
@@ -118,7 +142,7 @@ export function HomePage() {
     };
   }, [items, loading, query, selectedCategoryId]);
 
-  const heroItem = items[0] ?? null;
+  const heroItem = getDailyHeroItem(items);
   const shortcutCollections = categories.slice(0, 6);
   const availableItemsCount = items.filter((item) => item.quantity > 0).length;
   const premiumItems = [...items].sort((left, right) => right.price - left.price).slice(0, 3);

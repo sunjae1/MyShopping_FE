@@ -53,9 +53,18 @@ export function ProductPage() {
           return;
         }
 
+        const nextRelatedItems = allItems
+          .filter((entry) => entry.id !== itemId)
+          .filter((entry) =>
+            nextItem.categoryId === null || nextItem.categoryId === undefined
+              ? false
+              : entry.categoryId === nextItem.categoryId
+          )
+          .slice(0, 3);
+
         setItem(nextItem);
         setQuantity(nextItem.quantity > 0 ? 1 : 0);
-        setRelatedItems(allItems.filter((entry) => entry.id !== itemId).slice(0, 3));
+        setRelatedItems(nextRelatedItems);
       } catch (error) {
         if (!cancelled) {
           setFeedback(toAppErrorMessage(error, "상품 정보를 불러오지 못했습니다."));
@@ -167,9 +176,13 @@ export function ProductPage() {
           </div>
         </div>
         <div className="product-grid">
-          {relatedItems.map((relatedItem) => (
-            <ProductCard key={relatedItem.id} item={relatedItem} />
-          ))}
+          {relatedItems.length > 0 ? (
+            relatedItems.map((relatedItem) => (
+              <ProductCard key={relatedItem.id} item={relatedItem} />
+            ))
+          ) : (
+            <p className="empty-copy">같은 카테고리의 다른 상품이 아직 없습니다.</p>
+          )}
         </div>
       </section>
     </div>

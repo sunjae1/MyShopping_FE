@@ -1,4 +1,36 @@
 import { dispatchAuthRequired } from "../lib/auth";
+import {
+  DemoApiError,
+  addToCartDemo,
+  cancelOrderDemo,
+  checkoutDemo,
+  createCategoryDemo,
+  createCommentDemo,
+  createItemDemo,
+  createPostDemo,
+  deleteCategoryDemo,
+  deleteCommentDemo,
+  deleteItemDemo,
+  deletePostDemo,
+  fetchCartDemo,
+  fetchCategoriesDemo,
+  fetchItemDemo,
+  fetchItemsDemo,
+  fetchMyPageDemo,
+  fetchPostDemo,
+  fetchPostsDemo,
+  fetchSessionDemo,
+  loginDemo,
+  logoutDemo,
+  registerDemo,
+  removeCartItemDemo,
+  resetDemoClientState,
+  updateCategoryDemo,
+  updateCommentDemo,
+  updateItemDemo,
+  updatePostDemo,
+  updateProfileDemo
+} from "./demoClient";
 import type {
   Cart,
   CartItem,
@@ -15,6 +47,7 @@ import type {
 } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+const USE_DEMO_DATA = import.meta.env.VITE_USE_DEMO_DATA === "true";
 const REFRESH_PATH = "/api/auth/refresh";
 const LOGOUT_PATH = "/api/auth/logout";
 type AuthPolicy = "default" | "protected";
@@ -489,7 +522,15 @@ function normalizeCart(cart: unknown): Cart {
 }
 
 export function isUnauthorizedError(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 401;
+  if (error instanceof ApiError || error instanceof DemoApiError) {
+    return error.status === 401;
+  }
+
+  return isRecord(error) && asNumber(error.status) === 401;
+}
+
+export function isDemoModeEnabled(): boolean {
+  return USE_DEMO_DATA;
 }
 
 export function toAppErrorMessage(
@@ -512,6 +553,10 @@ export function toAppErrorMessage(
 }
 
 export async function fetchSession(): Promise<SessionPayload> {
+  if (USE_DEMO_DATA) {
+    return fetchSessionDemo();
+  }
+
   try {
     const response = requireRecord(
       await request<unknown>("/api"),
@@ -540,6 +585,10 @@ export async function fetchSession(): Promise<SessionPayload> {
 }
 
 export async function login(email: string, password: string): Promise<User> {
+  if (USE_DEMO_DATA) {
+    return loginDemo(email, password);
+  }
+
   const response = requireRecord(
     await request<unknown>(
     "/api/login",
@@ -573,6 +622,10 @@ export async function register(input: {
   email: string;
   password: string;
 }): Promise<User> {
+  if (USE_DEMO_DATA) {
+    return registerDemo(input);
+  }
+
   const user = normalizeUser(
     await request<unknown>("/api/register", {
       method: "POST",
@@ -591,6 +644,10 @@ export async function register(input: {
 }
 
 export async function logout(): Promise<void> {
+  if (USE_DEMO_DATA) {
+    return logoutDemo();
+  }
+
   await request(
     LOGOUT_PATH,
     {
@@ -606,6 +663,10 @@ export async function fetchItems(filters?: {
   keyword?: string;
   categoryId?: number | null;
 }): Promise<Item[]> {
+  if (USE_DEMO_DATA) {
+    return fetchItemsDemo(filters);
+  }
+
   return normalizeItems(
     await request<unknown>(buildItemQuery(filters)),
     "상품 목록 응답 형식이 올바르지 않습니다."
@@ -613,6 +674,10 @@ export async function fetchItems(filters?: {
 }
 
 export async function fetchItem(itemId: number): Promise<Item> {
+  if (USE_DEMO_DATA) {
+    return fetchItemDemo(itemId);
+  }
+
   const item = normalizeItem(await request<unknown>(`/api/items/${itemId}`));
 
   if (!item) {
@@ -623,6 +688,10 @@ export async function fetchItem(itemId: number): Promise<Item> {
 }
 
 export async function fetchCategories(): Promise<Category[]> {
+  if (USE_DEMO_DATA) {
+    return fetchCategoriesDemo();
+  }
+
   return normalizeCategories(
     await request<unknown>("/api/categories"),
     "카테고리 목록 응답 형식이 올바르지 않습니다."
@@ -630,6 +699,10 @@ export async function fetchCategories(): Promise<Category[]> {
 }
 
 export async function createCategory(input: { name: string }): Promise<Category> {
+  if (USE_DEMO_DATA) {
+    return createCategoryDemo(input);
+  }
+
   const category = normalizeCategory(
     await request<unknown>(
       "/api/categories",
@@ -657,6 +730,10 @@ export async function updateCategory(
   categoryId: number,
   input: { name: string }
 ): Promise<Category> {
+  if (USE_DEMO_DATA) {
+    return updateCategoryDemo(categoryId, input);
+  }
+
   const category = normalizeCategory(
     await request<unknown>(
       `/api/categories/${categoryId}`,
@@ -681,6 +758,10 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(categoryId: number): Promise<void> {
+  if (USE_DEMO_DATA) {
+    return deleteCategoryDemo(categoryId);
+  }
+
   await request(
     `/api/categories/${categoryId}`,
     {
@@ -693,6 +774,10 @@ export async function deleteCategory(categoryId: number): Promise<void> {
 }
 
 export async function createItem(input: ItemMutationInput): Promise<Item> {
+  if (USE_DEMO_DATA) {
+    return createItemDemo(input);
+  }
+
   const item = normalizeItem(
     await request<unknown>(
       "/api/items",
@@ -714,6 +799,10 @@ export async function createItem(input: ItemMutationInput): Promise<Item> {
 }
 
 export async function updateItem(itemId: number, input: ItemMutationInput): Promise<Item> {
+  if (USE_DEMO_DATA) {
+    return updateItemDemo(itemId, input);
+  }
+
   const item = normalizeItem(
     await request<unknown>(
       `/api/items/${itemId}`,
@@ -735,6 +824,10 @@ export async function updateItem(itemId: number, input: ItemMutationInput): Prom
 }
 
 export async function deleteItem(itemId: number): Promise<void> {
+  if (USE_DEMO_DATA) {
+    return deleteItemDemo(itemId);
+  }
+
   await request(
     `/api/items/${itemId}`,
     {
@@ -747,6 +840,18 @@ export async function deleteItem(itemId: number): Promise<void> {
 }
 
 export async function fetchCart(): Promise<Cart> {
+  if (USE_DEMO_DATA) {
+    try {
+      return await fetchCartDemo();
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        return normalizeCart(null);
+      }
+
+      throw error;
+    }
+  }
+
   try {
     const cart = await request<unknown>("/api/cart", {}, {
       authPolicy: "protected"
@@ -762,6 +867,10 @@ export async function fetchCart(): Promise<Cart> {
 }
 
 export async function addToCart(itemId: number, quantity: number): Promise<Cart> {
+  if (USE_DEMO_DATA) {
+    return addToCartDemo(itemId, quantity);
+  }
+
   const cart = await request<unknown>(
     `/api/cart/items/${itemId}`,
     {
@@ -784,6 +893,10 @@ export async function addToCart(itemId: number, quantity: number): Promise<Cart>
 }
 
 export async function removeCartItem(itemId: number): Promise<Cart> {
+  if (USE_DEMO_DATA) {
+    return removeCartItemDemo(itemId);
+  }
+
   const cart = await request<unknown>(
     `/api/cart/items/${itemId}`,
     {
@@ -798,6 +911,10 @@ export async function removeCartItem(itemId: number): Promise<Cart> {
 }
 
 export async function checkout(): Promise<Order> {
+  if (USE_DEMO_DATA) {
+    return checkoutDemo();
+  }
+
   const order = normalizeOrder(
     await request<unknown>(
       "/api/orders",
@@ -818,6 +935,10 @@ export async function checkout(): Promise<Order> {
 }
 
 export async function cancelOrder(orderId: number): Promise<Order> {
+  if (USE_DEMO_DATA) {
+    return cancelOrderDemo(orderId);
+  }
+
   const order = normalizeOrder(
     await request<unknown>(
       `/api/orders/${orderId}`,
@@ -838,6 +959,10 @@ export async function cancelOrder(orderId: number): Promise<Order> {
 }
 
 export async function fetchMyPage(): Promise<MyPage> {
+  if (USE_DEMO_DATA) {
+    return fetchMyPageDemo();
+  }
+
   const page = requireRecord(
     await request<unknown>(
       "/api/myPage",
@@ -872,6 +997,10 @@ export async function updateProfile(input: {
   name: string;
   email: string;
 }): Promise<User> {
+  if (USE_DEMO_DATA) {
+    return updateProfileDemo(input);
+  }
+
   const user = normalizeUser(
     await request<unknown>(
       "/api/users",
@@ -896,6 +1025,10 @@ export async function updateProfile(input: {
 }
 
 export async function fetchPosts(): Promise<Post[]> {
+  if (USE_DEMO_DATA) {
+    return fetchPostsDemo();
+  }
+
   return normalizePosts(
     await request<unknown>("/api/posts"),
     "게시물 목록 응답 형식이 올바르지 않습니다."
@@ -903,6 +1036,10 @@ export async function fetchPosts(): Promise<Post[]> {
 }
 
 export async function fetchPost(postId: number): Promise<Post> {
+  if (USE_DEMO_DATA) {
+    return fetchPostDemo(postId);
+  }
+
   const post = normalizePost(await request<unknown>(`/api/posts/${postId}`));
 
   if (!post) {
@@ -916,6 +1053,10 @@ export async function createPost(input: {
   title: string;
   content: string;
 }): Promise<Post> {
+  if (USE_DEMO_DATA) {
+    return createPostDemo(input);
+  }
+
   const post = normalizePost(
     await request<unknown>(
       "/api/posts",
@@ -943,6 +1084,10 @@ export async function updatePost(
   postId: number,
   input: { title: string; content: string }
 ): Promise<Post> {
+  if (USE_DEMO_DATA) {
+    return updatePostDemo(postId, input);
+  }
+
   const post = normalizePost(
     await request<unknown>(
       `/api/posts/${postId}`,
@@ -967,6 +1112,10 @@ export async function updatePost(
 }
 
 export async function deletePost(postId: number): Promise<void> {
+  if (USE_DEMO_DATA) {
+    return deletePostDemo(postId);
+  }
+
   await request(
     `/api/posts/${postId}`,
     {
@@ -979,6 +1128,10 @@ export async function deletePost(postId: number): Promise<void> {
 }
 
 export async function createComment(postId: number, content: string): Promise<Comment> {
+  if (USE_DEMO_DATA) {
+    return createCommentDemo(postId, content);
+  }
+
   const comment = normalizeComment(
     await request<unknown>(
       `/api/posts/${postId}/comments`,
@@ -1006,6 +1159,10 @@ export async function updateComment(
   commentId: number,
   content: string
 ): Promise<Comment> {
+  if (USE_DEMO_DATA) {
+    return updateCommentDemo(postId, commentId, content);
+  }
+
   const comment = normalizeComment(
     await request<unknown>(
       `/api/posts/${postId}/comments/${commentId}`,
@@ -1029,6 +1186,10 @@ export async function updateComment(
 }
 
 export async function deleteComment(postId: number, commentId: number): Promise<void> {
+  if (USE_DEMO_DATA) {
+    return deleteCommentDemo(postId, commentId);
+  }
+
   await request(
     `/api/posts/${postId}/comments/${commentId}`,
     {
@@ -1043,4 +1204,5 @@ export async function deleteComment(postId: number, commentId: number): Promise<
 export function resetAuthClientStateForTests(): void {
   refreshLock = null;
   authRequiredDispatchScheduled = false;
+  resetDemoClientState();
 }

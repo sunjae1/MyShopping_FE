@@ -243,8 +243,8 @@ export function CommunityDetailPage() {
         }}
       />
 
-      <div className="section-header">
-        <div>
+      <div className="section-header community-detail-header">
+        <div className="community-detail-title">
           <p className="eyebrow">STORY</p>
           <h1>{post.title}</h1>
         </div>
@@ -328,8 +328,8 @@ export function CommunityDetailPage() {
         )}
       </section>
 
-      <section className="surface-card">
-        <div className="section-header">
+      <section className="surface-card comment-section-card">
+        <div className="section-header comment-section-header">
           <div>
             <p className="eyebrow">COMMENTS</p>
             <h2>댓글</h2>
@@ -341,7 +341,7 @@ export function CommunityDetailPage() {
             const canEditComment = Boolean(user && user.name === comment.username);
 
             return (
-              <article key={comment.id} className="comment-card">
+              <article key={comment.id} className="comment-card detail-comment-card">
                 <div className="community-meta">
                   <span>{comment.username}</span>
                   <span>{formatDateTime(comment.createdDate)}</span>
@@ -404,7 +404,7 @@ export function CommunityDetailPage() {
         </div>
 
         {user ? (
-          <form className="auth-form" onSubmit={handleCreateComment}>
+          <form className="auth-form comment-compose-form" onSubmit={handleCreateComment}>
             <label>
               댓글 남기기
               <textarea

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { toAppErrorMessage } from "../api/client";
+import { isDemoModeEnabled, toAppErrorMessage } from "../api/client";
 import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
 import { getAuthMessage, sanitizeReturnTo } from "../lib/auth";
@@ -49,6 +49,12 @@ export function LoginPage() {
         <p className="eyebrow">LOGIN</p>
         <h1>다시 만나 반가워요</h1>
         <p>관심 상품과 주문 내역을 이어서 확인하고 편하게 쇼핑을 계속해 보세요.</p>
+        {isDemoModeEnabled() ? (
+          <p className="field-hint">
+            데모 계정: `demo@seoulselect.com / demo123!`, 운영자 계정:
+            `admin@seoulselect.com / admin123!`
+          </p>
+        ) : null}
 
         <StatusBanner tone="error">{bannerMessage}</StatusBanner>
 

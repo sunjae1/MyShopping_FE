@@ -34,10 +34,14 @@ const catalogItems = [
 
 describe("HomePage", () => {
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
   });
 
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-03-20T12:00:00"));
+
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       value: vi.fn(),
       writable: true,
@@ -72,7 +76,7 @@ describe("HomePage", () => {
     vi.mocked(fetchPosts).mockResolvedValue([]);
   });
 
-  it("keeps the featured hero stable while server-backed catalog search filters the grid", async () => {
+  it("keeps the daily-seeded featured hero stable while server-backed catalog search filters the grid", async () => {
     render(
       <MemoryRouter>
         <HomePage />
@@ -99,6 +103,69 @@ describe("HomePage", () => {
       keyword: "Bravo",
       categoryId: null
     });
+  });
+
+  it("changes the featured hero when the seeded date changes", async () => {
+    const rotatingItems = [
+      {
+        id: 1,
+        itemName: "Alpha Coat",
+        price: 189000,
+        quantity: 6,
+        categoryId: 1,
+        categoryName: "Outer",
+        imageUrl: "/alpha.webp"
+      },
+      {
+        id: 2,
+        itemName: "Bravo Knit",
+        price: 129000,
+        quantity: 3,
+        categoryId: 2,
+        categoryName: "Knit",
+        imageUrl: "/bravo.webp"
+      },
+      {
+        id: 3,
+        itemName: "Charlie Shirt",
+        price: 99000,
+        quantity: 9,
+        categoryId: 3,
+        categoryName: "Top",
+        imageUrl: "/charlie.webp"
+      }
+    ];
+
+    vi.mocked(fetchItems).mockImplementation(async () => rotatingItems);
+
+    vi.setSystemTime(new Date("2026-03-20T12:00:00"));
+
+    const firstRender = render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Bravo Knit" })
+    ).toBeInTheDocument();
+
+    firstRender.unmount();
+
+    vi.setSystemTime(new Date("2026-03-21T12:00:00"));
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Alpha Coat" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Bravo Knit" })
+    ).not.toBeInTheDocument();
   });
 
   it("renders live category shortcut cards with representative images from API data", async () => {

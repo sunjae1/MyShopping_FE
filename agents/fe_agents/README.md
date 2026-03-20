@@ -16,6 +16,7 @@
 1. 먼저 `../planning-agent.md`로 현재 계약과 범위를 정리합니다.
 2. 작업 대상이 명확하면 해당 기능형 에이전트를 호출합니다.
 3. 구현 후 `../testing-agent.md`, `../error-audit-agent.md`, `../reporting-agent.md` 순으로 넘깁니다.
+4. 작업 중 보고서/계획서/로드맵/체크리스트 Markdown 파일이 필요하면 결과는 프로젝트 루트 `codex_reports/`에만 저장합니다.
 
 ## Rule Of Thumb
 

@@ -5,6 +5,6 @@ vite.config.js
 vite.config.d.ts
 # 환경변수 설정
 .env
-.env.dev
+.env.development
 .env.production
 
