@@ -8,8 +8,14 @@ test.describe("community flows", () => {
     await installMockApi(page, {
       startAuthenticated: true
     });
+    await page.setViewportSize({ width: 900, height: 900 });
 
     await page.goto("/community");
+
+    await page.getByRole("button", { name: "글쓰기" }).click();
+    await expect(page.locator("#community-write")).toBeInViewport();
+    await expect(page.locator("#community-write")).toHaveClass(/community-write-highlighted/);
+    await expect(page.getByRole("heading", { level: 2, name: "오늘의 이야기 남기기" })).toBeVisible();
 
     await page.getByLabel("제목").fill("E2E 게시글");
     await page.getByLabel("내용").fill("브라우저 수준으로 커뮤니티 흐름을 검증합니다.");

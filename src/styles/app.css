@@ -1415,6 +1415,46 @@ textarea {
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
 }
 
+#community-write {
+  scroll-margin-top: 1rem;
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background 220ms ease,
+    transform 220ms ease;
+}
+
+@keyframes community-write-highlight-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(58, 110, 186, 0),
+      var(--shadow-soft);
+  }
+
+  35% {
+    box-shadow:
+      0 0 0 8px rgba(58, 110, 186, 0.05),
+      0 22px 44px rgba(58, 110, 186, 0.05);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 6px rgba(58, 110, 186, 0.11),
+      0 18px 36px rgba(58, 110, 186, 0.11);
+  }
+}
+
+.community-write-highlighted {
+  border-color: rgba(47, 99, 173, 0.4);
+  box-shadow:
+    0 0 0 6px rgba(58, 110, 186, 0.11),
+    0 18px 36px rgba(58, 110, 186, 0.11);
+  background:
+    linear-gradient(180deg, rgba(243, 248, 255, 1), rgba(229, 239, 255, 1));
+  transform: translateY(-1px);
+  animation: community-write-highlight-pulse 520ms ease-out;
+}
+
 .community-list-item {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:

@@ -40,6 +40,8 @@ test.describe("public storefront routes", () => {
     await expect(
       page.getByText("로그인 후 스타일 팁이나 쇼핑 후기를 남길 수 있습니다.")
     ).toBeVisible();
+    await page.getByRole("button", { name: "글쓰기" }).click();
+    await expect(page).toHaveURL(/\/login$/);
 
     await page.goto("/missing-route");
     await expect(

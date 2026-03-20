@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   createPost,
   fetchPosts,
@@ -79,10 +79,14 @@ function CommunityListExcerptText({ text }: { text: string }) {
 }
 
 export function CommunityPage() {
+  const navigate = useNavigate();
   const { user } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isWriteHighlighted, setIsWriteHighlighted] = useState(false);
+  const writePanelRef = useRef<HTMLElement | null>(null);
+  const writeHighlightTimerRef = useRef<number | null>(null);
   const [form, setForm] = useState({
     title: "",
     content: ""
@@ -118,6 +122,14 @@ export function CommunityPage() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (writeHighlightTimerRef.current !== null) {
+        window.clearTimeout(writeHighlightTimerRef.current);
+      }
+    };
+  }, []);
+
   async function handleCreatePost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -138,6 +150,30 @@ export function CommunityPage() {
     }
   }
 
+  function handleWriteCta() {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    setIsWriteHighlighted(true);
+    if (writeHighlightTimerRef.current !== null) {
+      window.clearTimeout(writeHighlightTimerRef.current);
+    }
+    writeHighlightTimerRef.current = window.setTimeout(() => {
+      setIsWriteHighlighted(false);
+      writeHighlightTimerRef.current = null;
+    }, 1800);
+
+    if (window.matchMedia("(max-width: 1080px)").matches) {
+      writePanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest"
+      });
+    }
+  }
+
   return (
     <div className="page-stack">
       <div className="section-header">
@@ -145,6 +181,9 @@ export function CommunityPage() {
           <p className="eyebrow">COMMUNITY</p>
           <h1>스타일 커뮤니티</h1>
         </div>
+        <button type="button" className="primary-button" onClick={handleWriteCta}>
+          글쓰기
+        </button>
       </div>
 
       <StatusBanner tone="info">{feedback}</StatusBanner>
@@ -171,7 +210,11 @@ export function CommunityPage() {
           ) : null}
         </section>
 
-        <aside className="surface-card">
+        <aside
+          id="community-write"
+          ref={writePanelRef}
+          className={`surface-card ${isWriteHighlighted ? "community-write-highlighted" : ""}`.trim()}
+        >
           <p className="eyebrow">WRITE</p>
           <h2>오늘의 이야기 남기기</h2>
           {user ? (
