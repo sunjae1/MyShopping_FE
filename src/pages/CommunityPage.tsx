@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
   createPost,
@@ -9,7 +9,74 @@ import {
 import type { Post } from "../api/types";
 import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
-import { formatDateTime } from "../lib/format";
+import { formatDate } from "../lib/format";
+
+function useOverflowFlag<T extends HTMLElement>(value: string) {
+  const ref = useRef<T | null>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+
+    if (!element) {
+      return;
+    }
+
+    const updateOverflow = () => {
+      const hasVerticalOverflow = element.scrollHeight - element.clientHeight > 1;
+      const hasHorizontalOverflow = element.scrollWidth - element.clientWidth > 1;
+
+      setIsOverflowing(hasVerticalOverflow || hasHorizontalOverflow);
+    };
+
+    updateOverflow();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      updateOverflow();
+    });
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [value]);
+
+  return {
+    ref,
+    isOverflowing
+  };
+}
+
+function CommunityListTitleText({ text }: { text: string }) {
+  const { ref, isOverflowing } = useOverflowFlag<HTMLElement>(text);
+
+  return (
+    <strong
+      ref={ref}
+      className={`community-list-title${isOverflowing ? " community-list-title-truncated" : ""}`}
+    >
+      {text}
+    </strong>
+  );
+}
+
+function CommunityListExcerptText({ text }: { text: string }) {
+  const { ref, isOverflowing } = useOverflowFlag<HTMLParagraphElement>(text);
+
+  return (
+    <p
+      ref={ref}
+      className={`community-list-excerpt${isOverflowing ? " community-list-excerpt-truncated" : ""}`}
+    >
+      {text}
+    </p>
+  );
+}
 
 export function CommunityPage() {
   const { user } = useSession();
@@ -90,14 +157,12 @@ export function CommunityPage() {
           <div className="community-list">
             {posts.map((post) => (
               <Link key={post.id} to={`/community/${post.id}`} className="community-list-item">
-                <div>
-                  <strong>{post.title}</strong>
-                  <p>{post.content}</p>
-                </div>
-                <div className="community-meta">
+                <CommunityListTitleText text={post.title} />
+                <div className="community-meta community-list-meta">
                   <span>{post.author}</span>
-                  <span>{formatDateTime(post.createdDate)}</span>
+                  <span>{formatDate(post.createdDate)}</span>
                 </div>
+                <CommunityListExcerptText text={post.content} />
               </Link>
             ))}
           </div>

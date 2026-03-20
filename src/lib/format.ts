@@ -23,6 +23,18 @@ export function formatDateTime(value: string): string {
   }).format(date);
 }
 
+export function formatDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium"
+  }).format(date);
+}
+
 export function getItemAvailability(quantity: number): string {
   if (quantity <= 0) {
     return "품절";

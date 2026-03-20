@@ -210,7 +210,7 @@ export function AdminCategoriesPage() {
       <section className="admin-page-grid">
         <div className="page-stack">
           <section className="surface-card">
-            <div className="section-header">
+            <div className="section-header admin-list-section-header">
               <div>
                 <p className="eyebrow">CATEGORY LIST</p>
                 <h2>관리 대상 카테고리</h2>
@@ -282,7 +282,7 @@ export function AdminCategoriesPage() {
         </div>
 
         <section className="surface-card">
-          <div className="section-header">
+          <div className="section-header admin-form-section-header">
             <div>
               <p className="eyebrow">{editingCategory ? "EDIT CATEGORY" : "NEW CATEGORY"}</p>
               <h2>{editingCategory ? "카테고리 수정" : "카테고리 생성"}</h2>

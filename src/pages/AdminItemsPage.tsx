@@ -261,14 +261,16 @@ export function AdminItemsPage() {
       <section className="admin-page-grid">
         <div className="page-stack">
           <section className="surface-card">
-            <div className="section-header">
+            <div className="section-header admin-form-section-header">
               <div>
                 <p className="eyebrow">FILTER</p>
                 <h2>판매 상품 찾기</h2>
               </div>
             </div>
 
-            <div className="catalog-summary">현재 {formatNumber(items.length)}개 상품 노출</div>
+            <div className="catalog-summary admin-filter-summary">
+              현재 {formatNumber(items.length)}개 상품 노출
+            </div>
 
             <div className="admin-toolbar">
               <label className="search-shell">
@@ -299,7 +301,7 @@ export function AdminItemsPage() {
           </section>
 
           <section className="surface-card">
-            <div className="section-header">
+            <div className="section-header admin-list-section-header">
               <div>
                 <p className="eyebrow">ITEMS</p>
                 <h2>관리 대상 상품</h2>
@@ -362,7 +364,7 @@ export function AdminItemsPage() {
         </div>
 
         <section className="surface-card">
-          <div className="section-header">
+          <div className="section-header admin-form-section-header">
             <div>
               <p className="eyebrow">{editingItem ? "EDIT ITEM" : "NEW ITEM"}</p>
               <h2>{editingItem ? "상품 수정" : "상품 등록"}</h2>
