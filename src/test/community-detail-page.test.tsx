@@ -140,4 +140,43 @@ describe("CommunityDetailPage", () => {
       expect(deletePost).toHaveBeenCalledWith(1);
     });
   });
+
+  it("shows edit counters and blocks saving when the post exceeds the limit", async () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={["/community/1"]}>
+        <Routes>
+          <Route path="/community/:postId" element={<CommunityDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("테스트 게시글")).toBeInTheDocument();
+    const postDetailCard = container.querySelector(".post-detail-card");
+    expect(postDetailCard).not.toBeNull();
+
+    fireEvent.click(within(postDetailCard as HTMLElement).getByRole("button", { name: "수정하기" }));
+
+    const titleInput = screen.getByLabelText("제목");
+    const contentTextarea = screen.getByLabelText("내용");
+    const saveButton = screen.getByRole("button", { name: "저장" });
+
+    expect(titleInput).toHaveAttribute("maxlength", "80");
+    expect(contentTextarea).toHaveAttribute("maxlength", "2000");
+
+    fireEvent.change(titleInput, { target: { value: "a".repeat(81) } });
+    fireEvent.change(contentTextarea, { target: { value: "b".repeat(2001) } });
+
+    expect(
+      screen.getByText("제목은 80자 이하로 입력해 주세요. 1자 초과했습니다.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("내용은 2000자 이하로 입력해 주세요. 1자 초과했습니다.")
+    ).toBeInTheDocument();
+    expect(saveButton).toBeDisabled();
+
+    fireEvent.submit(saveButton.closest("form") as HTMLFormElement);
+
+    expect(updatePost).not.toHaveBeenCalled();
+    expect(screen.getByText("제목은 80자 이하로 입력해 주세요.")).toBeInTheDocument();
+  });
 });

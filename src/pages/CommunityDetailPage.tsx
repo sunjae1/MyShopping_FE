@@ -15,6 +15,12 @@ import { ConfirmModal } from "../components/ConfirmModal";
 import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
 import { formatDateTime } from "../lib/format";
+import {
+  getLengthHintText,
+  POST_CONTENT_MAX_LENGTH,
+  POST_TITLE_MAX_LENGTH,
+  validatePostDraftLength
+} from "../lib/postValidation";
 
 export function CommunityDetailPage() {
   const navigate = useNavigate();
@@ -35,6 +41,10 @@ export function CommunityDetailPage() {
   const [deletingPost, setDeletingPost] = useState(false);
   const [pendingDeleteComment, setPendingDeleteComment] = useState<Comment | null>(null);
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
+  const editPostLengthErrors = validatePostDraftLength(postDraft);
+  const isEditPostLengthInvalid = Boolean(
+    editPostLengthErrors.title || editPostLengthErrors.content
+  );
 
   useEffect(() => {
     const postId = Number(params.postId);
@@ -128,6 +138,12 @@ export function CommunityDetailPage() {
 
   async function handleUpdatePost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nextLengthErrors = validatePostDraftLength(postDraft);
+
+    if (nextLengthErrors.title || nextLengthErrors.content) {
+      setFeedback(nextLengthErrors.title ?? nextLengthErrors.content);
+      return;
+    }
 
     try {
       const nextPost = await updatePost(postId, postDraft);
@@ -303,12 +319,12 @@ export function CommunityDetailPage() {
         }}
       />
 
-      <div className="section-header community-detail-header">
+      <div className="community-detail-header">
+        <p className="eyebrow community-detail-kicker">STORY</p>
         <div className="community-detail-title">
-          <p className="eyebrow">STORY</p>
           <h1>{post.title}</h1>
         </div>
-        <Link to="/community" className="ghost-button link-button">
+        <Link to="/community" className="ghost-button link-button community-detail-back-link">
           목록 보기
         </Link>
       </div>
@@ -318,11 +334,15 @@ export function CommunityDetailPage() {
       <section className="surface-card post-detail-card">
         {editingPost ? (
           <form className="auth-form" onSubmit={handleUpdatePost}>
-            <label>
-              제목
+            <div className="auth-field">
+              <label htmlFor="community-edit-title">제목</label>
               <input
+                id="community-edit-title"
                 type="text"
                 required
+                maxLength={POST_TITLE_MAX_LENGTH}
+                aria-invalid={Boolean(editPostLengthErrors.title)}
+                aria-describedby="community-edit-title-hint"
                 value={postDraft.title}
                 onChange={(event) =>
                   setPostDraft((current) => ({
@@ -331,12 +351,23 @@ export function CommunityDetailPage() {
                   }))
                 }
               />
-            </label>
-            <label>
-              내용
+              <p
+                id="community-edit-title-hint"
+                className={`field-hint${editPostLengthErrors.title ? " field-hint-error" : ""}`}
+                aria-live="polite"
+              >
+                {getLengthHintText("제목", postDraft.title, POST_TITLE_MAX_LENGTH)}
+              </p>
+            </div>
+            <div className="auth-field">
+              <label htmlFor="community-edit-content">내용</label>
               <textarea
+                id="community-edit-content"
                 rows={8}
                 required
+                maxLength={POST_CONTENT_MAX_LENGTH}
+                aria-invalid={Boolean(editPostLengthErrors.content)}
+                aria-describedby="community-edit-content-hint"
                 value={postDraft.content}
                 onChange={(event) =>
                   setPostDraft((current) => ({
@@ -345,9 +376,20 @@ export function CommunityDetailPage() {
                   }))
                 }
               />
-            </label>
+              <p
+                id="community-edit-content-hint"
+                className={`field-hint${editPostLengthErrors.content ? " field-hint-error" : ""}`}
+                aria-live="polite"
+              >
+                {getLengthHintText("내용", postDraft.content, POST_CONTENT_MAX_LENGTH)}
+              </p>
+            </div>
             <div className="inline-actions">
-              <button type="submit" className="primary-button">
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={isEditPostLengthInvalid}
+              >
                 저장
               </button>
               <button

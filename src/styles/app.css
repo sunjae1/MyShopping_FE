@@ -408,7 +408,8 @@ textarea {
 .hero-copy h1,
 .auth-card h1,
 .section-header h1,
-.product-detail-copy h1 {
+.product-detail-copy h1,
+.community-detail-title h1 {
   display: block;
   margin: 0;
   font-size: clamp(2.35rem, 5vw, 4.4rem);
@@ -1142,6 +1143,11 @@ textarea {
   gap: 0.9rem;
 }
 
+.auth-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .auth-form label {
   display: grid;
   gap: 0.35rem;
@@ -1523,25 +1529,38 @@ textarea {
 }
 
 .community-detail-header {
-  align-items: center;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "kicker ."
+    "title action";
+  gap: 0.5rem;
+  align-items: start;
   padding: 0.2rem 0 0.35rem;
 }
 
+.community-detail-kicker {
+  grid-area: kicker;
+}
+
 .community-detail-title {
+  grid-area: title;
   display: grid;
-  gap: 0.55rem;
+  min-width: 0;
 }
 
 .post-detail-card {
   display: grid;
   gap: 1.3rem;
   padding: 1.75rem;
+  min-width: 0;
 }
 
 .post-body {
   font-size: 1.04rem;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .post-detail-card .community-meta,
@@ -1560,6 +1579,21 @@ textarea {
 
 .post-detail-card .post-body {
   font-size: 1.08rem;
+}
+
+.community-detail-title h1,
+.post-detail-card .post-body,
+.detail-comment-card p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.community-detail-back-link {
+  grid-area: action;
+  align-self: center;
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .comment-section-header {
@@ -2021,6 +2055,19 @@ textarea {
     padding: 0;
   }
 
+  .community-detail-header {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "kicker"
+      "title"
+      "action";
+  }
+
+  .community-detail-back-link {
+    justify-self: start;
+    align-self: start;
+  }
+
   .shortcut-card {
     grid-template-rows: 196px auto;
   }
@@ -2038,7 +2085,8 @@ textarea {
   .hero-copy h1,
   .auth-card h1,
   .section-header h1,
-  .product-detail-copy h1 {
+  .product-detail-copy h1,
+  .community-detail-title h1 {
     font-size: 2.45rem;
   }
 

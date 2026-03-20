@@ -55,4 +55,51 @@ test.describe("community flows", () => {
     await expect(page).toHaveURL(/\/community$/);
     await expect(page.getByText("E2E 게시글 수정")).toHaveCount(0);
   });
+
+  test("keeps the detail page wrapped when title and content are filled to the maximum length", async ({
+    page
+  }) => {
+    await installMockApi(page, {
+      startAuthenticated: true
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    const longTitle = "A".repeat(80);
+    const longContent = "B".repeat(2000);
+
+    await page.goto("/community");
+    await page.getByRole("button", { name: "글쓰기" }).click();
+    await page.getByLabel("제목").fill(longTitle);
+    await page.getByLabel("내용").fill(longContent);
+    await page.getByRole("button", { name: "이야기 올리기" }).click();
+
+    await expect(page.getByText("새 게시글을 등록했습니다.")).toBeVisible();
+    await page.getByRole("link", { name: longTitle }).first().click();
+
+    await expect(page.getByRole("heading", { level: 1, name: longTitle })).toBeVisible();
+
+    const headingUsesResetSpacing = await page
+      .getByRole("heading", { level: 1, name: longTitle })
+      .evaluate((element) => {
+        const style = window.getComputedStyle(element);
+        return style.marginTop === "0px" && style.marginBottom === "0px";
+      });
+    const pageFitsViewport = await page.evaluate(() => {
+      const root = document.scrollingElement ?? document.documentElement;
+      return root.scrollWidth <= root.clientWidth + 1;
+    });
+    const detailCardFitsViewport = await page.locator(".post-detail-card").evaluate((element) => {
+      return element.scrollWidth <= element.clientWidth + 1;
+    });
+    const backLinkKeepsItsWidth = await page
+      .getByRole("link", { name: "목록 보기" })
+      .evaluate((element) => {
+        return element.clientWidth > element.clientHeight;
+      });
+
+    expect(headingUsesResetSpacing).toBe(true);
+    expect(pageFitsViewport).toBe(true);
+    expect(detailCardFitsViewport).toBe(true);
+    expect(backLinkKeepsItsWidth).toBe(true);
+  });
 });

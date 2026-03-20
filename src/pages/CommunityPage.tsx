@@ -10,6 +10,12 @@ import type { Post } from "../api/types";
 import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
 import { formatDate } from "../lib/format";
+import {
+  getLengthHintText,
+  POST_CONTENT_MAX_LENGTH,
+  POST_TITLE_MAX_LENGTH,
+  validatePostDraftLength
+} from "../lib/postValidation";
 
 function useOverflowFlag<T extends HTMLElement>(value: string) {
   const ref = useRef<T | null>(null);
@@ -91,6 +97,10 @@ export function CommunityPage() {
     title: "",
     content: ""
   });
+  const createPostLengthErrors = validatePostDraftLength(form);
+  const isCreatePostLengthInvalid = Boolean(
+    createPostLengthErrors.title || createPostLengthErrors.content
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +142,12 @@ export function CommunityPage() {
 
   async function handleCreatePost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nextLengthErrors = validatePostDraftLength(form);
+
+    if (nextLengthErrors.title || nextLengthErrors.content) {
+      setFeedback(nextLengthErrors.title ?? nextLengthErrors.content);
+      return;
+    }
 
     try {
       const post = await createPost(form);
@@ -219,29 +235,55 @@ export function CommunityPage() {
           <h2>오늘의 이야기 남기기</h2>
           {user ? (
             <form className="auth-form" onSubmit={handleCreatePost}>
-              <label>
-                제목
+              <div className="auth-field">
+                <label htmlFor="community-post-title">제목</label>
                 <input
+                  id="community-post-title"
                   type="text"
                   required
+                  maxLength={POST_TITLE_MAX_LENGTH}
+                  aria-invalid={Boolean(createPostLengthErrors.title)}
+                  aria-describedby="community-post-title-hint"
                   value={form.title}
                   onChange={(event) =>
                     setForm((current) => ({ ...current, title: event.target.value }))
                   }
                 />
-              </label>
-              <label>
-                내용
+                <p
+                  id="community-post-title-hint"
+                  className={`field-hint${createPostLengthErrors.title ? " field-hint-error" : ""}`}
+                  aria-live="polite"
+                >
+                  {getLengthHintText("제목", form.title, POST_TITLE_MAX_LENGTH)}
+                </p>
+              </div>
+              <div className="auth-field">
+                <label htmlFor="community-post-content">내용</label>
                 <textarea
+                  id="community-post-content"
                   required
                   rows={6}
+                  maxLength={POST_CONTENT_MAX_LENGTH}
+                  aria-invalid={Boolean(createPostLengthErrors.content)}
+                  aria-describedby="community-post-content-hint"
                   value={form.content}
                   onChange={(event) =>
                     setForm((current) => ({ ...current, content: event.target.value }))
                   }
                 />
-              </label>
-              <button type="submit" className="primary-button">
+                <p
+                  id="community-post-content-hint"
+                  className={`field-hint${createPostLengthErrors.content ? " field-hint-error" : ""}`}
+                  aria-live="polite"
+                >
+                  {getLengthHintText("내용", form.content, POST_CONTENT_MAX_LENGTH)}
+                </p>
+              </div>
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={isCreatePostLengthInvalid}
+              >
                 이야기 올리기
               </button>
             </form>
