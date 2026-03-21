@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   createPost,
@@ -6,7 +13,7 @@ import {
   isUnauthorizedError,
   toAppErrorMessage
 } from "../api/client";
-import type { Post } from "../api/types";
+import type { Post, PostSortOrder } from "../api/types";
 import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
 import { formatDate } from "../lib/format";
@@ -88,6 +95,7 @@ export function CommunityPage() {
   const navigate = useNavigate();
   const { user } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [sortOrder, setSortOrder] = useState<PostSortOrder>("desc");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isWriteHighlighted, setIsWriteHighlighted] = useState(false);
@@ -109,7 +117,7 @@ export function CommunityPage() {
       setLoading(true);
 
       try {
-        const nextPosts = await fetchPosts();
+        const nextPosts = await fetchPosts(sortOrder);
 
         if (!cancelled) {
           setPosts(nextPosts);
@@ -130,7 +138,7 @@ export function CommunityPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [sortOrder]);
 
   useEffect(() => {
     return () => {
@@ -151,7 +159,7 @@ export function CommunityPage() {
 
     try {
       const post = await createPost(form);
-      setPosts((current) => [post, ...current]);
+      setPosts((current) => (sortOrder === "asc" ? [...current, post] : [post, ...current]));
       setForm({
         title: "",
         content: ""
@@ -190,6 +198,10 @@ export function CommunityPage() {
     }
   }
 
+  function handleSortChange(event: ChangeEvent<HTMLSelectElement>) {
+    setSortOrder(event.target.value as PostSortOrder);
+  }
+
   return (
     <div className="page-stack">
       <div className="section-header">
@@ -206,8 +218,19 @@ export function CommunityPage() {
 
       <div className="community-layout">
         <section className="surface-card">
-          <p className="eyebrow">STORIES</p>
-          <h2>모든 이야기</h2>
+          <div className="community-list-header">
+            <div>
+              <p className="eyebrow">STORIES</p>
+              <h2>모든 이야기</h2>
+            </div>
+            <label className="community-sort-control">
+              <span>정렬</span>
+              <select aria-label="게시글 정렬" value={sortOrder} onChange={handleSortChange}>
+                <option value="desc">최신순</option>
+                <option value="asc">오래된순</option>
+              </select>
+            </label>
+          </div>
           {loading ? <p className="muted-copy">게시글을 불러오는 중입니다.</p> : null}
           <div className="community-list">
             {posts.map((post) => (

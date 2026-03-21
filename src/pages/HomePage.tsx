@@ -11,6 +11,7 @@ import { ProductCard } from "../components/ProductCard";
 import { StatusBanner } from "../components/StatusBanner";
 import {
   formatCurrency,
+  formatDate,
   formatDateTime,
   formatNumber,
   getItemAvailability,
@@ -166,9 +167,8 @@ export function HomePage() {
       ? {
           eyebrow: "STYLE TALK",
           title: communityHighlights[0].title,
-          description: `${communityHighlights[0].author}님의 새 글 · ${formatDateTime(
-            communityHighlights[0].createdDate
-          )}`
+          description: communityHighlights[0].author,
+          meta: formatDate(communityHighlights[0].createdDate)
         }
       : {
           eyebrow: "STYLE TALK",
@@ -318,7 +318,14 @@ export function HomePage() {
               <article key={`${card.eyebrow}-${card.title}`} className="promo-card">
                 <p className="eyebrow">{card.eyebrow}</p>
                 <h3>{card.title}</h3>
-                <p>{card.description}</p>
+                {"meta" in card ? (
+                  <div className="promo-card-supporting">
+                    <p>{card.description}</p>
+                    <span className="promo-card-meta">{card.meta}</span>
+                  </div>
+                ) : (
+                  <p>{card.description}</p>
+                )}
               </article>
             ))}
           </div>

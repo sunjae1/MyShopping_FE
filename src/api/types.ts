@@ -62,6 +62,8 @@ export interface Comment {
   createdDate: string;
 }
 
+export type PostSortOrder = "asc" | "desc";
+
 export interface Post {
   id: number;
   title: string;

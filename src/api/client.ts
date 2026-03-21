@@ -42,6 +42,7 @@ import type {
   Order,
   OrderItem,
   Post,
+  PostSortOrder,
   SessionPayload,
   User
 } from "./types";
@@ -504,6 +505,14 @@ function buildItemQuery(filters?: {
   const queryString = searchParams.toString();
 
   return queryString ? `/api/items?${queryString}` : "/api/items";
+}
+
+function buildPostQuery(sort: PostSortOrder = "desc"): string {
+  const searchParams = new URLSearchParams({
+    sort
+  });
+
+  return `/api/posts?${searchParams.toString()}`;
 }
 
 function toItemFormData(input: ItemMutationInput): FormData {
@@ -1048,13 +1057,13 @@ export async function updateProfile(input: {
   return user;
 }
 
-export async function fetchPosts(): Promise<Post[]> {
+export async function fetchPosts(sort: PostSortOrder = "desc"): Promise<Post[]> {
   if (USE_DEMO_DATA) {
-    return fetchPostsDemo();
+    return fetchPostsDemo(sort);
   }
 
   return normalizePosts(
-    await request<unknown>("/api/posts"),
+    await request<unknown>(buildPostQuery(sort)),
     "게시물 목록 응답 형식이 올바르지 않습니다."
   );
 }

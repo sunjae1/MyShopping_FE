@@ -7,6 +7,7 @@ import type {
   MyPage,
   Order,
   Post,
+  PostSortOrder,
   User
 } from "../../src/api/types";
 
@@ -243,6 +244,14 @@ function cartTotal(cart: Cart): number {
   return cart.cartItems.reduce((sum, cartItem) => {
     return sum + cartItem.item.price * cartItem.quantity;
   }, 0);
+}
+
+function sortPosts(posts: Post[], sort: PostSortOrder): Post[] {
+  return [...posts].sort((left, right) => {
+    return sort === "asc"
+      ? left.createdDate.localeCompare(right.createdDate)
+      : right.createdDate.localeCompare(left.createdDate);
+  });
 }
 
 function buildMyPage(state: MockApiState): MyPage {
@@ -561,7 +570,13 @@ async function handleRequest(route: Route, state: MockApiState) {
   }
 
   if (method === "GET" && pathname === "/api/posts") {
-    return json(route, 200, clone(state.posts));
+    const sortParam = url.searchParams.get("sort") ?? "desc";
+
+    if (sortParam !== "asc" && sortParam !== "desc") {
+      return badRequest(route, "정렬은 asc 또는 desc만 사용할 수 있습니다.");
+    }
+
+    return json(route, 200, clone(sortPosts(state.posts, sortParam)));
   }
 
   if (method === "GET" && /^\/api\/posts\/\d+$/.test(pathname)) {

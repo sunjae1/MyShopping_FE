@@ -10,6 +10,7 @@ import type {
   MyPage,
   Order,
   Post,
+  PostSortOrder,
   SessionPayload,
   User
 } from "./types";
@@ -189,6 +190,16 @@ function compareByNewest(left: { createdDate?: string; orderDate?: string }, rig
   const rightValue = right.createdDate ?? right.orderDate ?? "";
 
   return rightValue.localeCompare(leftValue);
+}
+
+function compareByOldest(
+  left: { createdDate?: string; orderDate?: string },
+  right: { createdDate?: string; orderDate?: string }
+) {
+  const leftValue = left.createdDate ?? left.orderDate ?? "";
+  const rightValue = right.createdDate ?? right.orderDate ?? "";
+
+  return leftValue.localeCompare(rightValue);
 }
 
 function getCategoryName(store: DemoStore, categoryId: number | null | undefined): string | null {
@@ -714,8 +725,10 @@ export async function updateProfileDemo(input: {
   return toPublicUser(user);
 }
 
-export async function fetchPostsDemo(): Promise<Post[]> {
-  return loadStore().posts.sort(compareByNewest).map((post) => toPublicPost(post));
+export async function fetchPostsDemo(sort: PostSortOrder = "desc"): Promise<Post[]> {
+  const comparator = sort === "asc" ? compareByOldest : compareByNewest;
+
+  return loadStore().posts.sort(comparator).map((post) => toPublicPost(post));
 }
 
 export async function fetchPostDemo(postId: number): Promise<Post> {

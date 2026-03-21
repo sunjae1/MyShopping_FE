@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchCategories, fetchItems, fetchPosts } from "../api/client";
@@ -189,6 +189,45 @@ describe("HomePage", () => {
     );
     expect(screen.getAllByText("1개의 상품을 만나보세요")).toHaveLength(2);
     expect(screen.getByText("무드별로 골라보는 카테고리 라인업")).toBeInTheDocument();
+  });
+
+  it("keeps the style talk promo card compact with shortened author and date copy", async () => {
+    vi.mocked(fetchPosts).mockResolvedValueOnce([
+      {
+        id: 11,
+        title: "ERRORERRORERRORERRORERRORERRORERRORERRORERROR",
+        content: "길게 작성된 본문",
+        author: "테스터님의이름이조금길어도카드안에들어가야함",
+        createdDate: "2026-03-21T05:28:00",
+        comments: []
+      }
+    ]);
+
+    render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText("2026. 3. 21.");
+
+    const styleTalkCard = screen.getByText("STYLE TALK").closest(".promo-card");
+
+    expect(styleTalkCard).not.toBeNull();
+
+    const promoCardQueries = within(styleTalkCard as HTMLElement);
+
+    expect(
+      promoCardQueries.getByRole("heading", {
+        level: 3,
+        name: "ERRORERRORERRORERRORERRORERRORERRORERRORERROR"
+      })
+    ).toBeInTheDocument();
+    expect(
+      promoCardQueries.getByText("테스터님의이름이조금길어도카드안에들어가야함")
+    ).toBeInTheDocument();
+    expect(promoCardQueries.getByText("2026. 3. 21.")).toBeInTheDocument();
+    expect(screen.queryByText(/님의 새 글/)).not.toBeInTheDocument();
   });
 
   it("filters the catalog by category shortcut selection", async () => {
