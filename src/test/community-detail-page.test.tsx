@@ -192,6 +192,64 @@ describe("CommunityDetailPage", () => {
     expect(screen.getByText("제목은 80자 이하로 입력해 주세요.")).toBeInTheDocument();
   });
 
+  it("caps comment content at 255 characters in compose and edit forms", async () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={["/community/1"]}>
+        <Routes>
+          <Route path="/community/:postId" element={<CommunityDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("삭제 예정 댓글")).toBeInTheDocument();
+
+    const composeTextarea = screen.getByLabelText("댓글 남기기");
+    const composeButton = screen.getByRole("button", { name: "댓글 남기기" });
+
+    expect(composeTextarea).toHaveAttribute("maxlength", "255");
+    expect(screen.getByText("255자 남음")).toBeInTheDocument();
+
+    fireEvent.change(composeTextarea, {
+      target: { value: "c".repeat(255) }
+    });
+
+    expect(composeTextarea).toHaveValue("c".repeat(255));
+    expect(
+      within(composeButton.closest("form") as HTMLFormElement).getByText("0자 남음")
+    ).toBeInTheDocument();
+    expect(composeButton).toBeEnabled();
+
+    fireEvent.change(composeTextarea, {
+      target: { value: "c".repeat(256) }
+    });
+
+    expect(composeTextarea).toHaveValue("c".repeat(255));
+    expect(
+      within(composeButton.closest("form") as HTMLFormElement).getByText("0자 남음")
+    ).toBeInTheDocument();
+    expect(composeButton).toBeEnabled();
+
+    const commentCard = container.querySelector(".detail-comment-card");
+    expect(commentCard).not.toBeNull();
+
+    fireEvent.click(
+      within(commentCard as HTMLElement).getByRole("button", { name: "수정" })
+    );
+
+    const editTextarea = screen.getByLabelText("댓글 수정");
+    const saveCommentButton = screen.getByRole("button", { name: "댓글 저장" });
+
+    expect(editTextarea).toHaveAttribute("maxlength", "255");
+
+    fireEvent.change(editTextarea, {
+      target: { value: "d".repeat(256) }
+    });
+
+    expect(editTextarea).toHaveValue("d".repeat(255));
+    expect(within(commentCard as HTMLElement).getByText("0자 남음")).toBeInTheDocument();
+    expect(saveCommentButton).toBeEnabled();
+  });
+
   it("truncates long delete preview text inside the modal", async () => {
     const longCommentContent = "ERROR".repeat(20);
 

@@ -1,4 +1,9 @@
-import { useEffect, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent
+} from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   createComment,
@@ -16,6 +21,7 @@ import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
 import { formatDateTime } from "../lib/format";
 import {
+  getLengthError,
   getLengthHintText,
   POST_CONTENT_MAX_LENGTH,
   POST_TITLE_MAX_LENGTH,
@@ -23,6 +29,7 @@ import {
 } from "../lib/postValidation";
 
 const DELETE_MODAL_PREVIEW_MAX_LENGTH = 48;
+const COMMENT_CONTENT_MAX_LENGTH = 255;
 
 function getDeleteModalPreview(text: string) {
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -45,6 +52,10 @@ function renderDeleteModalDescription(text: string, warning: string) {
       <span className="modal-description-note">{warning}</span>
     </>
   );
+}
+
+function clampCommentContent(value: string) {
+  return value.slice(0, COMMENT_CONTENT_MAX_LENGTH);
 }
 
 export function CommunityDetailPage() {
@@ -70,6 +81,20 @@ export function CommunityDetailPage() {
   const isEditPostLengthInvalid = Boolean(
     editPostLengthErrors.title || editPostLengthErrors.content
   );
+  const createCommentLengthError = getLengthError(
+    "댓글",
+    commentDraft,
+    COMMENT_CONTENT_MAX_LENGTH
+  );
+  const isCreateCommentLengthInvalid = Boolean(createCommentLengthError);
+
+  function handleCreateCommentChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setCommentDraft(clampCommentContent(event.target.value));
+  }
+
+  function handleEditCommentChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setEditingCommentText(clampCommentContent(event.target.value));
+  }
 
   useEffect(() => {
     const postId = Number(params.postId);
@@ -139,6 +164,16 @@ export function CommunityDetailPage() {
 
   async function handleCreateComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nextLengthError = getLengthError(
+      "댓글",
+      commentDraft,
+      COMMENT_CONTENT_MAX_LENGTH
+    );
+
+    if (nextLengthError) {
+      setFeedback(nextLengthError);
+      return;
+    }
 
     try {
       const nextComment = await createComment(postId, commentDraft);
@@ -231,6 +266,16 @@ export function CommunityDetailPage() {
     comment: Comment
   ) {
     event.preventDefault();
+    const nextLengthError = getLengthError(
+      "댓글",
+      editingCommentText,
+      COMMENT_CONTENT_MAX_LENGTH
+    );
+
+    if (nextLengthError) {
+      setFeedback(nextLengthError);
+      return;
+    }
 
     try {
       const nextComment = await updateComment(
@@ -473,6 +518,13 @@ export function CommunityDetailPage() {
         <div className="comment-list">
           {post.comments.map((comment) => {
             const canEditComment = Boolean(user && user.name === comment.username);
+            const editCommentLengthError =
+              editingCommentId === comment.id
+                ? getLengthError("댓글", editingCommentText, COMMENT_CONTENT_MAX_LENGTH)
+                : null;
+            const isEditCommentLengthInvalid = Boolean(editCommentLengthError);
+            const editCommentTextareaId = `community-comment-edit-${comment.id}`;
+            const editCommentHintId = `community-comment-edit-hint-${comment.id}`;
 
             return (
               <article key={comment.id} className="comment-card detail-comment-card">
@@ -486,20 +538,44 @@ export function CommunityDetailPage() {
                     className="auth-form"
                     onSubmit={(event) => void handleUpdateComment(event, comment)}
                   >
-                    <textarea
-                      rows={4}
-                      required
-                      value={editingCommentText}
-                      onChange={(event) => setEditingCommentText(event.target.value)}
-                    />
+                    <div className="auth-field">
+                      <label htmlFor={editCommentTextareaId}>댓글 수정</label>
+                      <textarea
+                        id={editCommentTextareaId}
+                        rows={4}
+                        required
+                        maxLength={COMMENT_CONTENT_MAX_LENGTH}
+                        aria-invalid={Boolean(editCommentLengthError)}
+                        aria-describedby={editCommentHintId}
+                        value={editingCommentText}
+                        onChange={handleEditCommentChange}
+                      />
+                      <p
+                        id={editCommentHintId}
+                        className={`field-hint${editCommentLengthError ? " field-hint-error" : ""}`}
+                        aria-live="polite"
+                      >
+                        {getLengthHintText(
+                          "댓글",
+                          editingCommentText,
+                          COMMENT_CONTENT_MAX_LENGTH
+                        )}
+                      </p>
+                    </div>
                     <div className="inline-actions">
-                      <button type="submit" className="primary-button">
+                      <button
+                        type="submit"
+                        className="primary-button"
+                        disabled={isEditCommentLengthInvalid}
+                      >
                         댓글 저장
                       </button>
                       <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => setEditingCommentId(null)}
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => {
+                            setEditingCommentId(null);
+                          }}
                       >
                         취소
                       </button>
@@ -515,7 +591,7 @@ export function CommunityDetailPage() {
                           className="ghost-button"
                           onClick={() => {
                             setEditingCommentId(comment.id);
-                            setEditingCommentText(comment.content);
+                            setEditingCommentText(clampCommentContent(comment.content));
                           }}
                         >
                           수정
@@ -539,16 +615,31 @@ export function CommunityDetailPage() {
 
         {user ? (
           <form className="auth-form comment-compose-form" onSubmit={handleCreateComment}>
-            <label>
-              댓글 남기기
+            <div className="auth-field">
+              <label htmlFor="community-comment-compose">댓글 남기기</label>
               <textarea
+                id="community-comment-compose"
                 rows={4}
                 required
+                maxLength={COMMENT_CONTENT_MAX_LENGTH}
+                aria-invalid={Boolean(createCommentLengthError)}
+                aria-describedby="community-comment-compose-hint"
                 value={commentDraft}
-                onChange={(event) => setCommentDraft(event.target.value)}
+                onChange={handleCreateCommentChange}
               />
-            </label>
-            <button type="submit" className="primary-button">
+              <p
+                id="community-comment-compose-hint"
+                className={`field-hint${createCommentLengthError ? " field-hint-error" : ""}`}
+                aria-live="polite"
+              >
+                {getLengthHintText("댓글", commentDraft, COMMENT_CONTENT_MAX_LENGTH)}
+              </p>
+            </div>
+            <button
+              type="submit"
+              className="primary-button"
+              disabled={isCreateCommentLengthInvalid}
+            >
               댓글 남기기
             </button>
           </form>
