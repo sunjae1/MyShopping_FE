@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CommunityDetailPage } from "../pages/CommunityDetailPage";
 import {
   createComment,
@@ -29,6 +29,10 @@ vi.mock("../contexts/SessionContext", () => ({
 }));
 
 describe("CommunityDetailPage", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -101,9 +105,14 @@ describe("CommunityDetailPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "삭제" }));
 
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("댓글을 삭제할까요?")).toBeInTheDocument();
-    expect(screen.getByText(/"삭제 예정 댓글" 댓글을 삭제하면 되돌릴 수 없습니다\./)).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog");
+
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText("댓글을 삭제할까요?")).toBeInTheDocument();
+    expect(within(dialog).getByText('"삭제 예정 댓글"')).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("댓글을 삭제하면 되돌릴 수 없습니다.")
+    ).toBeInTheDocument();
     expect(deleteComment).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "댓글 삭제" }));
@@ -129,9 +138,12 @@ describe("CommunityDetailPage", () => {
 
     fireEvent.click(within(postDetailCard as HTMLElement).getByRole("button", { name: "삭제하기" }));
 
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("게시글을 삭제할까요?")).toBeInTheDocument();
-    expect(screen.getByText(/"테스트 게시글" 글을 삭제하면 되돌릴 수 없습니다\./)).toBeInTheDocument();
+    const dialog = await screen.findByRole("dialog");
+
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText("게시글을 삭제할까요?")).toBeInTheDocument();
+    expect(within(dialog).getByText('"테스트 게시글"')).toBeInTheDocument();
+    expect(within(dialog).getByText("글을 삭제하면 되돌릴 수 없습니다.")).toBeInTheDocument();
     expect(deletePost).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "게시글 삭제" }));
@@ -178,5 +190,51 @@ describe("CommunityDetailPage", () => {
 
     expect(updatePost).not.toHaveBeenCalled();
     expect(screen.getByText("제목은 80자 이하로 입력해 주세요.")).toBeInTheDocument();
+  });
+
+  it("truncates long delete preview text inside the modal", async () => {
+    const longCommentContent = "ERROR".repeat(20);
+
+    vi.mocked(fetchPost).mockResolvedValueOnce({
+      id: 1,
+      title: "테스트 게시글",
+      content: "본문",
+      author: "작성자",
+      createdDate: "2026-03-20T10:00:00",
+      comments: [
+        {
+          id: 11,
+          content: longCommentContent,
+          username: "작성자",
+          createdDate: "2026-03-20T10:01:00"
+        }
+      ]
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/community/1"]}>
+        <Routes>
+          <Route path="/community/:postId" element={<CommunityDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText(longCommentContent)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "삭제" }));
+
+    const dialog = await screen.findByRole("dialog");
+
+    expect(
+      within(dialog).getByText(
+        (content) => content.startsWith('"ERROR') && content.endsWith('···"')
+      )
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("댓글을 삭제하면 되돌릴 수 없습니다.")
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).queryByText(`"${longCommentContent}"`)
+    ).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
+
 interface ConfirmModalProps {
   open: boolean;
   title: string;
-  description: string;
+  description: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   busy?: boolean;
@@ -36,7 +38,7 @@ export function ConfirmModal({
       >
         <p className={`modal-kicker modal-kicker-${tone}`}>DELETE CHECK</p>
         <h2 id="confirm-modal-title">{title}</h2>
-        <p className="modal-description">{description}</p>
+        <div className="modal-description">{description}</div>
         <div className="modal-actions">
           <button type="button" className="ghost-button" onClick={onCancel} disabled={busy}>
             {cancelLabel}

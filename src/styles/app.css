@@ -1695,9 +1695,26 @@ textarea {
 
 .modal-description {
   margin: 0.85rem 0 0;
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
   color: var(--ink-soft);
   font-size: 0.98rem;
   line-height: 1.65;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.modal-description-preview,
+.modal-description-note {
+  display: block;
+}
+
+.modal-description-preview {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .modal-actions {

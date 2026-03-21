@@ -22,6 +22,31 @@ import {
   validatePostDraftLength
 } from "../lib/postValidation";
 
+const DELETE_MODAL_PREVIEW_MAX_LENGTH = 48;
+
+function getDeleteModalPreview(text: string) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+
+  if (!normalized) {
+    return "";
+  }
+
+  return normalized.length > DELETE_MODAL_PREVIEW_MAX_LENGTH
+    ? `${normalized.slice(0, DELETE_MODAL_PREVIEW_MAX_LENGTH).trimEnd()}···`
+    : normalized;
+}
+
+function renderDeleteModalDescription(text: string, warning: string) {
+  const preview = getDeleteModalPreview(text);
+
+  return (
+    <>
+      {preview ? <span className="modal-description-preview">"{preview}"</span> : null}
+      <span className="modal-description-note">{warning}</span>
+    </>
+  );
+}
+
 export function CommunityDetailPage() {
   const navigate = useNavigate();
   const params = useParams();
@@ -265,8 +290,11 @@ export function CommunityDetailPage() {
         title="게시글을 삭제할까요?"
         description={
           pendingDeletePost
-            ? `"${pendingDeletePost.title}" 글을 삭제하면 되돌릴 수 없습니다.`
-            : ""
+            ? renderDeleteModalDescription(
+                pendingDeletePost.title,
+                "글을 삭제하면 되돌릴 수 없습니다."
+              )
+            : null
         }
         confirmLabel="게시글 삭제"
         tone="danger"
@@ -293,8 +321,11 @@ export function CommunityDetailPage() {
         title="댓글을 삭제할까요?"
         description={
           pendingDeleteComment
-            ? `"${pendingDeleteComment.content}" 댓글을 삭제하면 되돌릴 수 없습니다.`
-            : ""
+            ? renderDeleteModalDescription(
+                pendingDeleteComment.content,
+                "댓글을 삭제하면 되돌릴 수 없습니다."
+              )
+            : null
         }
         confirmLabel="댓글 삭제"
         tone="danger"

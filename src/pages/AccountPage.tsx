@@ -7,7 +7,8 @@ import {
   toAppErrorMessage,
   updateProfile
 } from "../api/client";
-import type { MyPage } from "../api/types";
+import type { MyPage, Order } from "../api/types";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { EmptyState } from "../components/EmptyState";
 import { StatusBanner } from "../components/StatusBanner";
 import { useSession } from "../contexts/SessionContext";
@@ -23,6 +24,19 @@ function getPostPreview(content: string) {
   return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
 }
 
+function getOrderPreview(order: Order) {
+  const [firstItem] = order.orderItems;
+
+  if (!firstItem) {
+    return `주문 #${order.id}`;
+  }
+
+  const extraItemCount = order.orderItems.length - 1;
+  const firstSummary = `${firstItem.itemName} ${firstItem.quantity}개`;
+
+  return extraItemCount > 0 ? `${firstSummary} 외 ${extraItemCount}건` : firstSummary;
+}
+
 export function AccountPage() {
   const { user, refreshSession } = useSession();
   const [page, setPage] = useState<MyPage | null>(null);
@@ -32,6 +46,8 @@ export function AccountPage() {
   });
   const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [cancellingOrderId, setCancellingOrderId] = useState<number | null>(null);
+  const [pendingCancelOrder, setPendingCancelOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -97,6 +113,9 @@ export function AccountPage() {
   }
 
   async function handleCancelOrder(orderId: number) {
+    setCancellingOrderId(orderId);
+    setFeedback(null);
+
     try {
       await cancelOrder(orderId);
       const nextPage = await fetchMyPage();
@@ -108,6 +127,8 @@ export function AccountPage() {
       }
 
       setFeedback(toAppErrorMessage(error, "주문 취소에 실패했습니다."));
+    } finally {
+      setCancellingOrderId(null);
     }
   }
 
@@ -134,6 +155,47 @@ export function AccountPage() {
 
   return (
     <div className="page-stack">
+      <ConfirmModal
+        open={pendingCancelOrder !== null}
+        title="주문을 취소할까요?"
+        description={
+          pendingCancelOrder ? (
+            <>
+              <span className="modal-description-preview">
+                주문 #{pendingCancelOrder.id} · {getOrderPreview(pendingCancelOrder)}
+              </span>
+              <span className="modal-description-note">
+                주문을 취소하면 상태가 즉시 변경되며 되돌릴 수 없습니다.
+              </span>
+            </>
+          ) : (
+            ""
+          )
+        }
+        confirmLabel="주문 취소"
+        tone="danger"
+        busy={
+          pendingCancelOrder !== null &&
+          cancellingOrderId === pendingCancelOrder.id
+        }
+        onCancel={() => {
+          if (cancellingOrderId !== null) {
+            return;
+          }
+
+          setPendingCancelOrder(null);
+        }}
+        onConfirm={() => {
+          if (!pendingCancelOrder) {
+            return;
+          }
+
+          void handleCancelOrder(pendingCancelOrder.id).finally(() => {
+            setPendingCancelOrder(null);
+          });
+        }}
+      />
+
       <div className="section-header">
         <div>
           <p className="eyebrow">MY ATELIER</p>
@@ -230,9 +292,10 @@ export function AccountPage() {
                 <button
                   type="button"
                   className="ghost-button"
-                  onClick={() => void handleCancelOrder(order.id)}
+                  disabled={cancellingOrderId === order.id}
+                  onClick={() => setPendingCancelOrder(order)}
                 >
-                  주문 취소
+                  {cancellingOrderId === order.id ? "주문 취소 중..." : "주문 취소"}
                 </button>
               ) : null}
             </article>
