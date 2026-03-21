@@ -314,20 +314,27 @@ export function HomePage() {
           )}
 
           <div className="hero-promo-grid">
-            {promoCards.map((card) => (
-              <article key={`${card.eyebrow}-${card.title}`} className="promo-card">
-                <p className="eyebrow">{card.eyebrow}</p>
-                <h3>{card.title}</h3>
-                {"meta" in card ? (
-                  <div className="promo-card-supporting">
+            {promoCards.map((card) => {
+              const hasMeta = "meta" in card;
+
+              return (
+                <article
+                  key={`${card.eyebrow}-${card.title}`}
+                  className={`promo-card ${hasMeta ? "promo-card-compact" : "promo-card-standard"}`}
+                >
+                  <p className="eyebrow">{card.eyebrow}</p>
+                  <h3>{card.title}</h3>
+                  {hasMeta ? (
+                    <div className="promo-card-supporting">
+                      <p>{card.description}</p>
+                      <span className="promo-card-meta">{card.meta}</span>
+                    </div>
+                  ) : (
                     <p>{card.description}</p>
-                    <span className="promo-card-meta">{card.meta}</span>
-                  </div>
-                ) : (
-                  <p>{card.description}</p>
-                )}
-              </article>
-            ))}
+                  )}
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>

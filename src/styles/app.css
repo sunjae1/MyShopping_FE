@@ -569,6 +569,17 @@ textarea {
 .promo-card-meta {
   margin: 0;
   min-width: 0;
+}
+
+.promo-card-standard p {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.promo-card-compact p,
+.promo-card-meta {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
